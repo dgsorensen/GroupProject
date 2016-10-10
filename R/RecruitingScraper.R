@@ -42,13 +42,11 @@ for(year in 2007:2013){
   tb <- html_table(pg, fill = TRUE)           #import tables
   df <- tb[[1]]
 
-currentPage <- 1
+currentPage <- 2
 while (currentPage < maxPages[i])
 {
   
 
-  currentPage <- 2
-  
   url <- paste(urlP1,currentPage,urlP2,year,urlP3, sep="")
 
   pg <- readUrl(url)                     #import the website content
