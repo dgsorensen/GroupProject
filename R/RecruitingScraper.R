@@ -24,28 +24,32 @@ readUrl <- function(url) {
   return(out)
 }
 
+maxPages <- c(284,258,282,487,508,631,575)
 
-
-#Get the first page
-url <-
-  "http://www.espn.com/college-sports/football/recruiting/databaseresults/_/page/1/sportid/24/class/2016/sort/grade/order/true"
-
-pg <-
-  read_html(url)                        #import the website content
-tb <- html_table(pg, fill = TRUE)           #import tables
-df <- tb[[1]]
-
-
-
-urlPrefix <-
+urlP1 <-
   "http://www.espn.com/college-sports/football/recruiting/databaseresults/_/page/"
-urlSuffix <- "/sportid/24/class/2016/sort/grade/order/true"
-currentPage <- 2
+urlP2 <- "/sportid/24/class/"
+urlP3 <- "/sort/grade/order/true"
 
+for(year in 2007:2013){
+  i <- 1
+  
+  url <- paste(urlP1,1,urlP2,year,urlP3, sep="")
+    
+  
+  pg <-
+    read_html(url)                        #import the website content
+  tb <- html_table(pg, fill = TRUE)           #import tables
+  df <- tb[[1]]
 
-while (currentPage < 284)
+currentPage <- 1
+while (currentPage < maxPages[i])
 {
-  url <- paste(urlPrefix, currentPage, urlSuffix, sep = "")
+  
+
+  currentPage <- 2
+  
+  url <- paste(urlP1,currentPage,urlP2,year,urlP3, sep="")
 
   pg <- readUrl(url)                     #import the website content
   if (is.list(pg) & length(pg) != 0)     #make sure the site loaded correctly, otherwise skip
@@ -64,8 +68,8 @@ while (currentPage < 284)
 names(df) <-
   c("Name", "Hometown", "Position", "Stars", "Grade", "School")
 df <- subset(df, Name != "NAME")
-write.csv(df, "20016Players.csv", row.names = FALSE)
-
-#df_top25 <- tb[[12]]                        #top 25 teams
-
-#df_ratings <- tb[[11]]                      #ranking of 32 conferences
+outFile <- paste(year,"Recruits.csv")
+write.csv(df, outFile, row.names = FALSE)
+i <- i + 1.
+df <- df[0, ]
+}
