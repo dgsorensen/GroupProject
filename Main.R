@@ -5,7 +5,7 @@ rm(list = ls())
 getwd()
 
 
-
+source("./R/RecruitingScraper.R")
 #Load libraries
 
 #Load libraries
@@ -164,7 +164,7 @@ getCombinedPlayers <- function() {
 #End of functions that will be moved
 ##########################################
 
-
+scrapePlayerRankings()
 dfCombinedStats <- getCombinedStats()
 dfCombinedStats <- dfCombinedStats %>% group_by(Player.Code, Year) %>% summarise_each(funs(sum))
 
