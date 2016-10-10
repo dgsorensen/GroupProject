@@ -1,4 +1,13 @@
 
+rm(list = ls()) 
+
+#Get work directory
+getwd()
+
+
+
+#Load libraries
+
 #Load libraries
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(plyr))
@@ -6,16 +15,21 @@ suppressPackageStartupMessages(library(dplyr))
 library(grid)
 library(reshape2)
 library(scales)
-rm(list = ls()) 
-
-#Get work directory
-getwd()
-
-#sys.source("./R/Functions.R", envir = baseenv())
-
-#Load libraries
 
 ###############################
+#Temporarily placing functions here for easy testing.  They will eventually go into
+#  /R/Functions.R
+###############################
+
+#' getSeasonStats
+#' Return player points for a specific season
+#' @param year 
+#' @param df - dataframe for filtering players
+#'
+#' @return PointSummary
+#' @export 
+#'
+#' @examples
 getSeasonStats <- function( year, df ) {
   
   
@@ -47,6 +61,13 @@ getSeasonStats <- function( year, df ) {
 
 
 
+#' getCombinedStats
+#' Combine the total statistics of all players from 2007-2013 by combining
+#' the csv files into a dataframe
+#' @return df (all of the players who made a play in any season)
+#' @export
+#'
+#' @examples
 getCombinedStats<- function(){
   filePath <- "./Data/PlayerStats/"
   df <- read.csv("./Data/PlayerStats/2007player-game-statistics.csv", stringsAsFactors = FALSE)
@@ -72,6 +93,13 @@ getCombinedStats<- function(){
   
 }
 
+#' getCombinedRankings
+#' Combine all player rankings (that were scraped from the espn recruiting site)
+#' and return a list of all of the players who were ranked
+#' @return df (all of the players)
+#' @export
+#'
+#' @examples
 getCombinedRankings<- function(){
   filePath <- "./Data/PlayerRankings/"
   df <- read.csv("./Data/PlayerRankings/2007CFBPlayerRankings.csv", stringsAsFactors = FALSE)
@@ -98,9 +126,18 @@ getCombinedRankings<- function(){
   
 }
 
+#' getCombinedPlayers
+#' Combine the player.csv file for each year to get every player from 2007-2013 regardless
+#' of whether or not they ever played
+#' @return
+#' @export
+#'
+#' @examples
 getCombinedPlayers <- function() {
   filePath <- "./Data/Stats/Stats "
   df <- read.csv("./Data/Stats/Stats 2007/player.csv", stringsAsFactors = FALSE)
+  df$Position <- NULL #remove position
+  df$Full.Name = paste(df$First.Name, df$LastName, sep = " ")
   df$Year <- 2007
   
   
@@ -108,6 +145,8 @@ getCombinedPlayers <- function() {
   for(i in 2008:2013){
     inFile <- paste(filePath,i,"/player.csv", sep="")
     dfNew <- read.csv(inFile, stringsAsFactors = FALSE)
+    dfNew$Position <- NULL #remove position
+    dfNew$Full.Name = paste(dfNew$First.Name, dfNew$LastName, sep = " ")
     dfNew$Year <- i                           #add the year as a new column
     dfTemp <- rbind(df, dfNew)                #combine the datasets
     df <- dfTemp                              #reassign to main df
@@ -121,19 +160,23 @@ getCombinedPlayers <- function() {
   
   
 }
-#############################################################
+##########################################
+#End of functions that will be moved
+##########################################
 
 
 dfCombinedStats <- getCombinedStats()
 dfCombinedStats <- dfCombinedStats %>% group_by(Player.Code, Year) %>% summarise_each(funs(sum))
 
-dfCombinedRankings <- getCombinedRankings()
+dfCombinedRankings <- getCombinedRankings()  #these are the players we're going to be ranking
 dfCombinedPlayers <- getCombinedPlayers()
+dfCombinedPlayers <- group_by(dfCombinedPlayers, Player.Code, Full.Name)
+dfUniquePlayers <- summarize(dfCombinedPlayers)
 
-df2007 <- getSeasonStats(2007,dfCombinedRankings)
-df2008 <- getSeasonStats(2008,dfCombinedRankings)
-df2009 <- getSeasonStats(2009,dfCombinedRankings)
-df2010 <- getSeasonStats(2010,dfCombinedRankings)
-df2011 <- getSeasonStats(2011,dfCombinedRankings)
-df2012 <- getSeasonStats(2012,dfCombinedRankings)
-df2013 <- getSeasonStats(2013,dfCombinedRankings)
+df2007 <- getStatsOfClassRecruits(2007)
+df2008 <- getStatsOfClassRecruits(2007)
+df2009 <- getStatsOfClassRecruits(2007)
+df2010 <- getStatsOfClassRecruits(2007)
+df2011 <- getStatsOfClassRecruits(2007)
+df2012 <- getStatsOfClassRecruits(2007)
+df2013 <- getStatsOfClassRecruits(2007)
