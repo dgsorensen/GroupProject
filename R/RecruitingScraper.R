@@ -33,38 +33,38 @@ scrapePlayerRankings <- function() {
     "http://www.espn.com/college-sports/football/recruiting/databaseresults/_/page/"
   urlP2 <- "/sportid/24/class/"
   urlP3 <- "/sort/grade/order/true"
- # i <- 0
-  i <- 1
-  for (year in 2008:2013) {
+  i <- 2
+  for (year in 2009:2013) {
     i <- i + 1
     
-    url <- paste(urlP1, 1, urlP2, year, urlP3, sep = "")
+    url <-paste(urlP1, 1, urlP2, year, urlP3, sep = "")
     
     
     pg <-
       read_html(url)                        #import the website content
+    s
     tb <- html_table(pg, fill = TRUE)           #import tables
     df <- tb[[1]]
     
     currentPage <- 2
     while (currentPage < maxPages[i])
     {
-      if (year == 2008 & currentPage == 26){continue}
+    
       url <- paste(urlP1, currentPage, urlP2, year, urlP3, sep = "")
       
       pg <-
         readUrl(url)                     #import the website content
-      if (is.list(pg) &
-          length(pg) != 0)
+      if(is.null(pg)){continue}
         #make sure the site loaded correctly, otherwise skip
-      {
+      
         tb <- html_table(pg, fill = TRUE)    #import tables
         newdf <- tb[[1]]
+        if(!(is.data.frame(newdf) | ncol(newdf) == ncol(df))){continue}
         tmpdf <- rbind(df, newdf)
         df <- tmpdf
         newdf <- newdf[0,]
         tmpdf <- tmpdf[0,]
-      }
+      
       currentPage <- currentPage + 1
       
     }
