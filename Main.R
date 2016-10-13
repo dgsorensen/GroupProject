@@ -1,12 +1,17 @@
-
+#Clear work area
 rm(list = ls()) 
 
 #Get work directory
 getwd()
 
+source("./R/Functions.R")
+if(!(file.exists("./Data/PlayerRankings/2007CFBPlayerRankings.csv"))){
+#This will rescrape the espn pages for recruiting info and will take forever
+  #source("./R/RecruitingScraper.R")
+ # getRecruits()
+print("Data files not found.  Please set working directory to GroupProject")  
+}
 
-source("./R/RecruitingScraper.R")
-#Load libraries
 
 #Load libraries
 suppressPackageStartupMessages(library(ggplot2))
@@ -52,7 +57,7 @@ getSeasonStats <- function( year, df ) {
                                               Rec.Yards, Rec.TD,Kickoff.Ret.Yard,Kickoff.Ret.TD,Punt.Ret.Yard,
                                               Misc.Ret.Yard, Misc.Ret.TD,Off.2XP.Made))
   
-  pointSummary <- pointSummary[with(pointSummary,order(-totalPoints)), ]
+  pointSummary <- pointSummary[with(pointSummary,order(-totalPoints)), ] #sort by totalpoints descending
   
   
   return(pointSummary)
@@ -69,8 +74,8 @@ getSeasonStats <- function( year, df ) {
 #'
 #' @examples
 getCombinedStats<- function(){
-  filePath <- "./Data/PlayerStats/"
-  df <- read.csv("./Data/PlayerStats/2007player-game-statistics.csv", stringsAsFactors = FALSE)
+  filePath <- "./Data/GameStats/"
+  df <- read.csv("./Data/GameStats/2007player-game-statistics.csv", stringsAsFactors = FALSE)
   df$Year <- 2007
   
   
@@ -86,8 +91,35 @@ getCombinedStats<- function(){
     
   }
   
+  
   df$Game.Code <- factor(df$Game.Code) #show the actual game code (instead of 12E14)
-  df <- df[, c(1,4,5,8,9,10,13,14,16,17,19,20,28,29,35,59)] #keep the columns we care about
+  df <- df[, c(1,2,4,5,8,9,10,13,14,16,17,19,20,28,29,35,59)] #keep the columns we care about 
+  hold <- df$Game.Code #Factor can't be multiplied against, so hold keeps it until after the calculations
+  
+  #vector to hold the point per attribute
+  pointVector <-
+    c(  1,  .1,  #PlayerCode(ignored*1) , Rushing Yard (1 pt per 10 yards)
+        6,  .04, #Rushing TD(6 pts), Passing Yard (1 pt per 25 yards)
+        4,  -2,  #Passing TD (4 pts), Passing Int (-2 points)
+        .1, 6,   #Receiving Yard (1 pt per 10 yards), Receiving TD(6 pts)
+        .2, 6,   #Kickoff Return Yard(1 pt per 5 yards), kickoff return td(6 points)
+        .2, 6,   #punt return yard(1 point per 5 years), punt return td(6 pts)
+        .2, 6,   #Misc return yard(1 point per 5 yards), misc return td(6 pts)
+        2,  1)   #2pt conversion made (2pts), Year (ignore * 1)
+    
+  df <- floor(data.frame(mapply("*" ,df[-2],pointVector))) #get total points per game, ignore the game code vector
+  df$Game.Code <- hold #reassign the vector
+  
+  df <- group_by(df,Player.Code, Year) #
+  pointSummary <- summarize(df, #add the points to gether to get the total points for each player for the season
+                            totalPoints = sum(Rush.Yard, Rush.TD, Pass.Yard, Pass.TD, Pass.Int,
+                                              Rec.Yards, Rec.TD,Kickoff.Ret.Yard,Kickoff.Ret.TD,Punt.Ret.Yard,
+                                              Misc.Ret.Yard, Misc.Ret.TD,Off.2XP.Made))
+  
+  pointSummary <- pointSummary[with(pointSummary,order(-totalPoints)), ] #sort by totalpoints descending
+  
+  
+  
   
   return(df)
   
@@ -119,9 +151,7 @@ getCombinedRankings<- function(){
     
   }
   
-  #df$Game.Code <- factor(df$Game.Code) #show the actual game code (instead of 12E14)
-  #df <- df[, c(1,4,5,8,9,10,13,14,16,17,19,20,28,29,35,59)] #keep the columns we care about
-  
+  df$Grade[df$Grade == "NA" | df$Grade == "NR"] <- 49
   return(df)
   
 }
@@ -134,19 +164,19 @@ getCombinedRankings<- function(){
 #'
 #' @examples
 getCombinedPlayers <- function() {
-  filePath <- "./Data/Stats/Stats "
-  df <- read.csv("./Data/Stats/Stats 2007/player.csv", stringsAsFactors = FALSE)
+  filePath <- "./Data/PlayerInfo/"
+  df <- read.csv("./Data/PlayerInfo/2007player.csv", stringsAsFactors = FALSE)
   df$Position <- NULL #remove position
-  df$Full.Name = paste(df$First.Name, df$LastName, sep = " ")
+  df$Full.Name <- paste(df$First.Name, df$Last.Name, sep = " ")
   df$Year <- 2007
   
   
   #combine all of the player stats 
   for(i in 2008:2013){
-    inFile <- paste(filePath,i,"/player.csv", sep="")
+    inFile <- paste(filePath,i,"player.csv", sep="")
     dfNew <- read.csv(inFile, stringsAsFactors = FALSE)
     dfNew$Position <- NULL #remove position
-    dfNew$Full.Name = paste(dfNew$First.Name, dfNew$LastName, sep = " ")
+    dfNew$Full.Name <- paste(dfNew$First.Name, dfNew$Last.Name, sep = " ")
     dfNew$Year <- i                           #add the year as a new column
     dfTemp <- rbind(df, dfNew)                #combine the datasets
     df <- dfTemp                              #reassign to main df
@@ -164,19 +194,51 @@ getCombinedPlayers <- function() {
 #End of functions that will be moved
 ##########################################
 
-scrapePlayerRankings()
-dfCombinedStats <- getCombinedStats()
-dfCombinedStats <- dfCombinedStats %>% group_by(Player.Code, Year) %>% summarise_each(funs(sum))
+#Get the points per game for each player in every game/season
+dfRawStats <- getCombinedStats()
 
-dfCombinedRankings <- getCombinedRankings()  #these are the players we're going to be ranking
-dfCombinedPlayers <- getCombinedPlayers()
-dfCombinedPlayers <- group_by(dfCombinedPlayers, Player.Code, Full.Name)
+#Total the points up to get the total points scored in the year
+dfRawStats <- group_by(dfRawStats, Player.Code, Year)
+dfSortedStats <- summarize(dfRawStats,
+                           totalPoints = sum(Rush.Yard, Rush.TD, Pass.Yard, Pass.TD, Pass.Int,
+                                             Rec.Yards, Rec.TD,Kickoff.Ret.Yard,Kickoff.Ret.TD,Punt.Ret.Yard,
+                                             Misc.Ret.Yard, Misc.Ret.TD,Off.2XP.Made))
+ungroup(dfRawStats)
+
+dfCombinedRankings <- getCombinedRankings() #Get all of the recruits that were scraped from the ESPN site from 2007-2013
+dfCombinedPlayers <- getCombinedPlayers() #Get all of the players listed on the stats spreadsheet from the same period
+
+#Summarize the players so we can get the player ID from the stats to match the scraped recruiting data
+dfCombinedPlayers <- group_by(dfCombinedPlayers, Player.Code, Full.Name, Home.State)
 dfUniquePlayers <- summarize(dfCombinedPlayers)
 
-df2007 <- getStatsOfClassRecruits(2007)
-df2008 <- getStatsOfClassRecruits(2007)
-df2009 <- getStatsOfClassRecruits(2007)
-df2010 <- getStatsOfClassRecruits(2007)
-df2011 <- getStatsOfClassRecruits(2007)
-df2012 <- getStatsOfClassRecruits(2007)
-df2013 <- getStatsOfClassRecruits(2007)
+#Merge using Full name and Home State giving us the ID
+dfRecruited <- merge(dfUniquePlayers, dfCombinedRankings, by=c("Full.Name", "Home.State"))
+
+#Some players were listed on the recruiting pages on different years (going to JUCO, taking a year to play in FCS, etc), so we only
+#want the latest year that they appeared in the recruiting rankings
+dfRecruited <- dfRecruited[order(-dfRecruited$Year), ] #Sort by year descending
+dfRecruited <- dfRecruited[!duplicated(dfRecruited$Player.Code), ] #remove the duplicates
+
+#merge the 2 data frames to add the points and years played to each player's line
+dfPlayerPoints <- merge(dfRecruited, dfSortedStats, by = ("Player.Code"))
+names(dfPlayerPoints) <- c("Player.Code", "Full.Name", "Home.State", "Recruiting.Ranking", "Last.Name", "First.Name", "Position", 
+                           "Recruiting.Grade", "Year.Recruited", "Year.Played", "Yearly.Points")
+
+#Get the career summary of the players' info, their points, and how many years they played
+dfPlayerPoints <- group_by(dfPlayerPoints,Player.Code, Full.Name, Recruiting.Ranking, Position, Recruiting.Grade, Year.Recruited)
+dfPlayerCareer <- summarize(dfPlayerPoints, Total.Points = sum(Yearly.Points), Years.Played = n())
+
+
+
+dfClass07 <- subset(dfPlayerCareer, Year.Recruited == 2007)
+dfClass08 <- subset(dfPlayerCareer, Year.Recruited == 2008)
+dfClass09 <- subset(dfPlayerCareer, Year.Recruited == 2009)
+dfClass10 <- subset(dfPlayerCareer, Year.Recruited == 2010)
+dfClass11 <- subset(dfPlayerCareer, Year.Recruited == 2011)
+dfClass12 <- subset(dfPlayerCareer, Year.Recruited == 2012)
+dfClass13 <- subset(dfPlayerCareer, Year.Recruited == 2013)
+
+
+
+
