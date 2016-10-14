@@ -58,14 +58,14 @@ getSeasonStats <- function( year, df ) {
 getCombinedStats<- function(){
   filePath <- "./Data/GameStats/"
   df <- read.csv("./Data/GameStats/2007player-game-statistics.csv", stringsAsFactors = FALSE)
-  df$Year.Stats <- 2007
+  df$Year.Played <- 2007
   
   
   #combine all of the player stats 
   for(i in 2008:2013){
     inFile <- paste(filePath,i,"player-game-statistics.csv", sep="")
     dfNew <- read.csv(inFile, stringsAsFactors = FALSE)
-    dfNew$Year.Stats <- i                           #add the year as a new column
+    dfNew$Year.Played <- i                    #add the year as a new column
     dfTemp <- rbind(df, dfNew)                #combine the datasets
     df <- dfTemp                              #reassign to main df
     dfNew  <- dfNew[0, ]                      #clear out the work areas
@@ -92,7 +92,7 @@ getCombinedStats<- function(){
   df <- floor(data.frame(mapply("*" ,df[-2],pointVector))) #get total points per game, ignore the game code vector
   df$Game.Code <- hold #reassign the vector
   
-  df <- group_by(df,Player.Code, Year.Stats) #
+  df <- group_by(df,Player.Code, Year.Played) #
   pointSummary <- summarize(df, #add the points to gether to get the total points for each player for the season
                             totalPoints = sum(Rush.Yard, Rush.TD, Pass.Yard, Pass.TD, Pass.Int,
                                               Rec.Yards, Rec.TD,Kickoff.Ret.Yard,Kickoff.Ret.TD,Punt.Ret.Yard,
@@ -103,7 +103,7 @@ getCombinedStats<- function(){
   
   
   
-  return(df)
+  return(pointSummary)
   
 }
 
@@ -150,7 +150,7 @@ getCombinedPlayers <- function() {
   df <- read.csv("./Data/PlayerInfo/2007player.csv", stringsAsFactors = FALSE)
  # df$Position <- NULL #remove position
   df$Full.Name <- paste(df$First.Name, df$Last.Name, sep = " ")
-  df$Year.Active <- 2007
+  df$Year.Rostered <- 2007
   
   
   #combine all of the player stats 
@@ -159,7 +159,7 @@ getCombinedPlayers <- function() {
     dfNew <- read.csv(inFile, stringsAsFactors = FALSE)
    # dfNew$Position <- NULL #remove position
     dfNew$Full.Name <- paste(dfNew$First.Name, dfNew$Last.Name, sep = " ")
-    dfNew$Year.Active <- i                     #add the year as a new column
+    dfNew$Year.Rostered <- i                     #add the year as a new column
     dfTemp <- rbind(df, dfNew)                #combine the datasets
     df <- dfTemp                              #reassign to main df
     dfNew  <- dfNew[0, ]                      #clear out the work areas

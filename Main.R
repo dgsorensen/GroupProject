@@ -13,83 +13,59 @@ stop("Data Files not Found", call.=FALSE)
 }
 
 
-
-
-dfRawStats         <- getCombinedStats()    #Get the points per game for each player in every game/season
+dfPlayerStats      <- getCombinedStats()    #Get the points per game for each player in every game/season
 dfCombinedRankings <- getCombinedRankings() #Get all of the recruits that were scraped from the ESPN site from 2007-2013
 dfCombinedPlayers  <- getCombinedPlayers()  #Get all of the players listed on the stats spreadsheet from the same period
 
-#Delete the players that aren't part of the recruiting class
-filters <- which(dfCombinedPlayers$Home.State %in% dfCombinedRankings$Home.State & 
-                 dfCombinedPlayers$Home.Town %in% dfCombinedRankings$Home.Town & 
-                 dfCombinedPlayers$Full.Name %in% dfCombinedRankings$Full.Name)
-dfCombinedPlayers <- subset(dfCombinedPlayers[filters,])
-dfCombinedPlayers <-subset(dfCombinedPlayers, !((Year.Active == 2007 | Year.Active == 2008) &
-                             Class != "FR"))
+#Get rid of duplicate recruits, keeping the most recent (the JUCO problem)
+dfCombinedRankings <- dfCombinedRankings[order(-dfCombinedRankings$Year.Ranked), ]
+dfCombinedRankings <- dfCombinedRankings[!duplicated(c(dfCombinedRankings$Full.Name,
+                                                       dfCombinedRankings$Home.Town,dfCombinedRankings$HomeState),
+                                                       fromLast = TRUE), ] #remove the duplicates
 
-#Remove duplicate recruits by sorting by year, and keeping the most recent entry
-#Some players go to JUCO or other non FCS school and show up as a recruiter in 
-#later years
+#Get rid of duplicate players unnecessary columns
+dfCombinedPlayers <- dfCombinedPlayers[order(-dfCombinedPlayers$Year.Rostered), ]
+dfCombinedPlayers <- dfCombinedPlayers[!duplicated(dfCombinedPlayers$Player.Code), ]
+dfCombinedPlayers <- subset(dfCombinedPlayers[, c(1,10,11,14)])
 
-
-dfCombinedRankings <- group_by(dfCombinedRankings, Full.Name, Home.State, Home.Town)
-#This max Year gives us the last time the recruit showed up in a ranking report.  This is
-#not unusual as some recruits attend JUCO or prep schools that don't affect eligibility
-dfUniqueRecruits <- summarize(dfCombinedRankings, 
-                               Year.Recruited = max(Year.Ranked))
+#Merge using Full name and Home State giving us the ID so we can link the recruit to the stats
+dfRecruits<- merge(dfCombinedPlayers , dfCombinedRankings, by=c("Full.Name", "Home.Town", "Home.State")) 
 
 
-#Total the points up to get the total points scored in the year
-dfRawStats <- group_by(dfRawStats, Player.Code, Year.Stats)
-dfSortedStats <- summarize(dfRawStats,
-                           totalPoints = sum(Rush.Yard, Rush.TD, Pass.Yard, Pass.TD, Pass.Int,
-                                             Rec.Yards, Rec.TD,Kickoff.Ret.Yard,Kickoff.Ret.TD,Punt.Ret.Yard,
-                                             Misc.Ret.Yard, Misc.Ret.TD,Off.2XP.Made))
-rm(dfRawStats) #Free Memory
+rm(dfCombinedPlayers,dfCombinedRankings) #Free memory
 
+#Remove stats that don't apply to recruits
+filters <- which(dfPlayerStats$Player.Code %in% dfRecruits$Player.Code)
+dfPlayerStats <- subset(dfPlayerStats[filters,])
 
+#Format stats to merge: create total points and years played
+dfPlayerStats<- group_by(dfPlayerStats, Player.Code)
+dfPoints <- summarize(dfPlayerStats, Total.Points = sum(totalPoints),
+                       Years.Played = n())
+                       
+#Merge the player with the stats
+dfRecruitCareer <- merge(dfRecruits, dfPoints, by = ("Player.Code"))
+#Add a new "points per year" column
+dfRecruitCareer$Points.Per.Year <- 
+    ceiling(dfRecruitCareer$Total.Points / dfRecruitCareer$Years.Played)
 
-
-#Summarize the players so we can get the player ID from the stats to match the scraped recruiting data
-dfCombinedPlayers <- group_by(dfCombinedPlayers, Player.Code, Full.Name, Home.Town, Home.State)
-dfUniquePlayers <- summarize(dfCombinedPlayers)
-#Merge using Full name and Home State giving us the ID
-
-dfRecruits<- merge(dfUniquePlayers, dfCombinedRankings, by=c("Full.Name", "Home.Town", "Home.State"), all.x = FALSE) 
-
-
-#dfRecruits <- merge(dfUniquePlayers, dfCombinedRankings)with(dfRecruits,dfRecruits[First.Year >= Year])
-
-rm(dfUniquePlayers,dfCombinedPlayers) #Free memory
-
-#Some players were listed on the recruiting pages on different years (going to JUCO, taking a year to play in FCS, etc), so we only
-#want the latest year that they appeared in the recruiting rankings
-dfRecruits <- dfRecruits[order(-dfRecruits$Year.Ranked), ] #Sort by year descending
-dfRecruits <- dfRecruits[!duplicated(dfRecruits$Player.Code, fromLast = FALSE), ] #remove the duplicates
-
-
-filters <- which(dfSortedStats$Player.Code %in% dfRecruits$Player.Code)
-dfSortedStats <- subset(dfSortedStats[filters,])
-dfSortedStats <- group_by(dfSortedStats, Player.Code)
-dfPoints <- summarize(dfSortedStats, Total.Points = sum(totalPoints),
-                   Year.Started = min(Year.Stats), Year.Ended = max(Year.Stats),
-                   Years.Played = n())
-#merge the 2 data frames to add the points and years played to each player's line
-dfPlayerPoints <- merge(dfRecruits, dfPoints, by = ("Player.Code"))
-
-
+#Drop unnecessary columns and make other columns more readable
+dfRecruitCareer <- subset(dfRecruitCareer[,-c(3,6,7)])
+names(dfRecruitCareer) <- c("PlayerCode", "Name","Home State",
+                            "RecruitingRank","Position","RecruitingGrade",
+                            "YearRanked", "TotalPoints", "YearsPlayed", "PointsPerYear")
                   
                                                                                                                      
-#rm(dfPlayerPoints, dfSortedStats, dfRecruits)
+rm(filters,dfRecruits, dfPoints, dfPlayerStats) #free memory
 
 
-dfClass07 <- subset(dfPlayerPoints, Year.Ranked == 2007)
-dfClass08 <- subset(dfPlayerPoints, Year.Ranked == 2008)
-dfClass09 <- subset(dfPlayerPoints, Year.Ranked == 2009)
-dfClass10 <- subset(dfPlayerPoints, Year.Ranked == 2010)
-dfClass11 <- subset(dfPlayerPoints, Year.Ranked == 2011)
-dfClass12 <- subset(dfPlayerPoints, Year.Ranked == 2012)
-dfClass13 <- subset(dfPlayerPoints, Year.Ranked == 2013)
+dfClass07 <- subset(dfRecruitCareer, YearRanked == 2007)
+dfClass08 <- subset(dfRecruitCareer, YearRanked == 2008)
+dfClass09 <- subset(dfRecruitCareer, YearRanked == 2009)
+dfClass10 <- subset(dfRecruitCareer, YearRanked == 2010)
+dfClass11 <- subset(dfRecruitCareer, YearRanked == 2011)
+dfClass12 <- subset(dfRecruitCareer, YearRanked == 2012)
+dfClass13 <- subset(dfRecruitCareer, YearRanked == 2013)
 
 
 
