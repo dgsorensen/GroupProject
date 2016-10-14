@@ -15,7 +15,39 @@ stop("Data Files not Found", call.=FALSE)
 
 
 #Get the points per game for each player in every game/season
-dfRawStats <- getCombinedStats()
+dfRawStats         <- getCombinedStats()
+dfCombinedRankings <- getCombinedRankings() #Get all of the recruits that were scraped from the ESPN site from 2007-2013
+dfCombinedPlayers  <- getCombinedPlayers()  #Get all of the players listed on the stats spreadsheet from the same period
+
+
+filters <- which(dfCombinedPlayers$Home.State %in% dfCombinedRankings$Home.State & 
+              dfCombinedPlayers$Home.Town %in% dfCombinedRankings$Home.Town & 
+              dfCombinedPlayers$Full.Name %in% dfCombinedRankings$Full.Name)
+dfCombinedPlayers <- subset(dfCombinedPlayers[filters,])
+
+
+dfCombinedRankings<- dfCombinedRankings[order(-dfCombinedRankings$Year), ] #Sort by year descending
+dfCombinedRankings <- dfCombinedRankings[!duplicated(dfRecruits$Player.Name), ]
+
+
+
+
+#Remove the players that aren't in the rankings
+test2 <- subset(dfCombinedPlayers,
+                            dfCombinedPlayers$Full.Name %in% dfCombinedRankings$Full.name)# &
+                           # dfCombinedPlayers$Home.Town %in% dfCombinedRankings$Home.Town &
+                           # dfCombinedPlayers$Home.State %in% dfCombinedRankings$Home.State)
+test <- dfCombinedPlayers[(Home.Town %in% dfCombinedRankings$Home.Town &
+                           Home.State %in% dfCombinedRankings$Home.State &
+                           Full.Name %in% dfCombinedRankings$Full.Name), ]
+
+
+dfCombinedRankings <- group_by(dfCombinedRankings, Full.Name, Home.State, Home.Town)
+#This max Year gives us the last time the recruit showed up in a ranking report.  This is
+#not unusual as some recruits attend JUCO or prep schools that don't affect eligibility
+dfUniqueRecruits <- summarize(dfCombinedRankings, 
+                               Year.Recruited = max(Year))
+
 
 #Total the points up to get the total points scored in the year
 dfRawStats <- group_by(dfRawStats, Player.Code, Year)
@@ -26,8 +58,7 @@ dfSortedStats <- summarize(dfRawStats,
 rm(dfRawStats) #Free Memory
 
 
-dfCombinedRankings <- getCombinedRankings() #Get all of the recruits that were scraped from the ESPN site from 2007-2013
-dfCombinedPlayers <- getCombinedPlayers() #Get all of the players listed on the stats spreadsheet from the same period
+
 
 #Summarize the players so we can get the player ID from the stats to match the scraped recruiting data
 dfCombinedPlayers <- group_by(dfCombinedPlayers, Player.Code, Full.Name, Home.Town, Home.State)
