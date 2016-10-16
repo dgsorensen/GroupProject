@@ -1,59 +1,71 @@
-#Clear work area
+#-Clear work area
 rm(list = ls()) 
 
-#Get work directory
+#-Get work directory
 getwd()
-
+#-Check for recruit ranking files.  Rescrape files if not found
 source("./R/Functions.R")
 if(!(file.exists("./Data/PlayerRankings/2007CFBPlayerRankings.csv"))){
-#This will rescrape the espn pages for recruiting info and will take forever
+  #Commented to prevent scraping
   #source("./R/RecruitingScraper.R")
- # getRecruits()
-stop("Data Files not Found", call.=FALSE)
+  # getRecruits()
+  stop("Data Files not Found", call.=FALSE)
 }
 
-lSummaryStats <- list()
+#------------------------------------------------------
+#Get the recruit, player, and stat data by reading
+# the csv files in the ./Data folder
+#------------------------------------------------------
 
 
-dfCombinedRecruits <- getCombinedRecruits() #Get all of the recruits that were scraped from the ESPN site from 2007-2013
-dfCombinedPlayers  <- getCombinedPlayers()  #Get all of the players listed on the stats spreadsheet from the same period
+#-Get recruits from recruit files that were created from ESPN scraping
+dfCombinedRecruits <- getCombinedRecruits() 
 
-#Merge using Full name and Home State giving us the ID so we can link the recruit to the stats
-dfRecruits<- merge(dfCombinedPlayers , dfCombinedRecruits, by=c("Full.Name", "Home.Town", "Home.State")) 
+#-Get players from the player stats set that correspond to the recruits
+dfCombinedPlayers  <- getCombinedPlayers() 
+
+#-Attach the playerCode to the recruit to connect to stats
+dfRecruits <- merge(dfCombinedPlayers , dfCombinedRecruits, 
+                    by=c("fullName", "hometown", "homeState")) 
 
 
-rm(dfCombinedPlayers,dfCombinedRecruits) #Free memory
-dfRecruitStats <- getRecruitStats(dfRecruits)    #Get the points per game for each player in every game/season
+rm(dfCombinedPlayers,dfCombinedRecruits) 
+
+#-Get the points per year for each recruit by reading the game files
+dfRecruitStats <- getRecruitStats(dfRecruits)    
 
 
-#Format stats to merge: create total points and years played
-dfRecruitStats<- group_by(dfRecruitStats, Player.Code)
-dfPoints <- summarize(dfRecruitStats, Total.Points = sum(totalPoints),
-                       Years.Played = n())
-                       
+#-Format stats to merge: create total points and years played
+dfRecruitStats <- group_by(dfRecruitStats, playerCode)
+dfPoints <- summarize(dfRecruitStats, totalPoints = sum(pointsInYear),
+                      yearsPlayed = n())
+
 #Merge the player with the stats
-dfRecruitCareer <- merge(dfRecruits, dfPoints, by = ("Player.Code"))
+dfRecruitCareer <- merge(dfRecruits, dfPoints, by = ("playerCode"))
 #Add a new "points per year" column
-dfRecruitCareer$Points.Per.Year <- 
-    ceiling(dfRecruitCareer$Total.Points / dfRecruitCareer$Years.Played)
+dfRecruitCareer$pointsPerYear<- 
+  ceiling(dfRecruitCareer$totalPoints / dfRecruitCareer$yearsPlayed)
 
 #Drop unnecessary columns and make other columns more readable
-dfRecruitCareer <- subset(dfRecruitCareer[,-c(3,6,7)])
-names(dfRecruitCareer) <- c("PlayerCode", "Name","HomeState",
-                            "RecruitingRank","Position","RecruitingGrade",
-                            "YearRanked", "TotalPoints", "YearsPlayed", "PointsPerYear")
-                  
-                                                                                                                     
+dfRecruitCareer <- subset(dfRecruitCareer[,-c(3,7,8)])
+names(dfRecruitCareer) <- c("playerCode", "name","homeState", "yearRostered",
+                            "recruitingRank","dfRecruitCareer$Position","recruitingGrade",
+                            "yearRanked", "totalPoints", "yearsPlayed", 
+                            "avgPointsPerYear")
+
+
 rm(dfRecruits, dfPoints, dfRecruitStats) #free memory
 
 
-dfClass07 <- subset(dfRecruitCareer, YearRanked == 2007)
-dfClass08 <- subset(dfRecruitCareer, YearRanked == 2008)
-dfClass09 <- subset(dfRecruitCareer, YearRanked == 2009)
-dfClass10 <- subset(dfRecruitCareer, YearRanked == 2010)
-dfClass11 <- subset(dfRecruitCareer, YearRanked == 2011)
-dfClass12 <- subset(dfRecruitCareer, YearRanked == 2012)
-dfClass13 <- subset(dfRecruitCareer, YearRanked == 2013)
+dfClass07 <- subset(dfRecruitCareer, yearRanked == 2007)
+dfClass08 <- subset(dfRecruitCareer, yearRanked == 2008)
+dfClass09 <- subset(dfRecruitCareer, yearRanked == 2009)
+dfClass10 <- subset(dfRecruitCareer, yearRanked == 2010)
+dfClass11 <- subset(dfRecruitCareer, yearRanked == 2011)
+dfClass12 <- subset(dfRecruitCareer, yearRanked == 2012)
+dfClass13 <- subset(dfRecruitCareer, yearRanked == 2013)
+
+
 
 
 
