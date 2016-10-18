@@ -4,12 +4,15 @@ suppressPackageStartupMessages(library(plyr))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(foreach))
 suppressPackageStartupMessages(library(doParallel))
+library(ggplot2)
+library(scales)
 
-
+numCores <- detectCores()
+cl <- makeCluster(numCores)
+registerDoParallel(cl)
 
 
 getRecruitStats<- function(dfRecruits){
-  
   #Read all of the game csv files and combine them
   df <- foreach(i=2007:2013, .combine = 'rbind', .inorder=TRUE) %dopar% {
     inFile <- paste("./Data/GameStats/",i,"player-game-statistics.csv", sep="")
@@ -18,6 +21,8 @@ getRecruitStats<- function(dfRecruits){
     dfHold$Year.Played <- i                  
     dfHold                 
   }
+  
+  
   
   #Remove stats that don't apply to recruits
   filters <- which(df$Player.Code %in% dfRecruits$playerCode)
@@ -76,6 +81,29 @@ getCombinedRecruits<- function(){
     dfHold
   }
   
+  dfTemp <- df
+  dfTemp$Year <- factor(dfTemp$Year.Ranked)
+  
+  dfTemp <- group_by(dfTemp, Year)
+  dfTemp <- summarize(dfTemp, numPlayers = n())
+  
+  if(!(file.exists("./Plots/RecruitsCensus.png"))){
+    p <- ggplot(dfTemp, aes(x=Year, y=numPlayers, fill = Year))+
+      geom_bar(stat = "identity", color = "black")+
+      labs(x = "Year", y = "Number of PRecruits", title = "Players per Year")+
+      scale_y_continuous(labels = comma,
+                         breaks = 1000 * c(8:19))+
+      theme(panel.grid = element_blank(), panel.background = element_blank())+
+      coord_cartesian(ylim = c(8000, 19000))+
+      guides(fill=FALSE)
+    
+    
+    ggsave(filename = "./Plots/RecruitCensus.png", plot = p, 
+           width = 6, height = 4, dpi = 600)
+    
+    rm(dfTemp, p)
+  }
+  
   #-Grades go as low as 50, so unranked gets assigned 49
   df$Grade[df$Grade == "NA" | df$Grade == "NR"] <- 49
   
@@ -86,6 +114,8 @@ getCombinedRecruits<- function(){
   
   names(df) <- c("rank", "fullName", "lastName","firstName","position",
                  "recruitingGrade","hometown", "homeState", "yearRanked")
+  
+  
   return(df)
   
 }
@@ -105,6 +135,29 @@ getCombinedPlayers <- function() {
   } 
   
   df <- subset(df,First.Name != "TEAM")
+  
+  dfTemp <- df
+  dfTemp$Year <- factor(dfTemp$Year.Rostered)
+  
+  dfTemp <- group_by(dfTemp, Year)
+  dfTemp <- summarize(dfTemp, numPlayers = n())
+  
+  if(!(file.exists("./Plots/PlayerCensus.png"))){
+    p <- ggplot(dfTemp, aes(x=Year, y=numPlayers, fill = Year))+
+      geom_bar(stat = "identity", color = "black")+
+      labs(x = "Year", y = "Number of Players", title = "Players per Year")+
+      scale_y_continuous(labels = comma,
+                         breaks = 1000 * c(17:22))+
+      theme(panel.grid = element_blank(), panel.background = element_blank())+
+      coord_cartesian(ylim = c(17000, 22000))+
+      guides(fill=FALSE)
+    
+    ggsave(filename = "./Plots/PlayerCensus.png", plot = p, 
+           width = 6, height = 4, dpi = 600)
+    
+    rm(dfTemp, p)
+  }
+  
   
   #Get rid of duplicate players, and keep the most recent appearance
   df <- df[order(-df$Year.Rostered), ]
