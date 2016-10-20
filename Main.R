@@ -3,6 +3,22 @@ rm(list = ls())
 
 #-Get work directory
 getwd()
+
+
+#Load libraries
+suppressPackageStartupMessages(library(plyr))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(foreach))
+suppressPackageStartupMessages(library(doParallel))
+library(ggplot2)
+library(scales)
+
+#-Register Parallel for faster looping
+numCores <- detectCores()
+cl <- makeCluster(numCores - 1)
+registerDoParallel(cl)
+
+
 #-Check for recruit ranking files.  Rescrape files if not found
 source("./R/Functions.R")
 if(!(file.exists("./Data/PlayerRankings/2007CFBPlayerRankings.csv"))){
@@ -33,8 +49,9 @@ rm(dfCombinedPlayers,dfCombinedRecruits)
 
 #-Get the points per year for each recruit by reading the game files
 dfRecruitStats <- getRecruitStats(dfRecruits)    
-
-
+#-Stop the cluster.  CSV reading is finished
+stopCluster(cl)
+dfYearlyStats <- dfRecruitStats
 #-Format stats to merge: create total points and years played
 dfRecruitStats <- group_by(dfRecruitStats, playerCode)
 dfPoints <- summarize(dfRecruitStats, totalPoints = sum(pointsInYear),
@@ -49,21 +66,34 @@ dfRecruitCareer$pointsPerYear<-
 #Drop unnecessary columns and make other columns more readable
 dfRecruitCareer <- subset(dfRecruitCareer[,-c(3,7,8)])
 names(dfRecruitCareer) <- c("playerCode", "name","homeState", "yearRostered",
-                            "recruitingRank","dfRecruitCareer$Position","recruitingGrade",
-                            "yearRanked", "totalPoints", "yearsPlayed", 
-                            "avgPointsPerYear")
+                            "recruitingRank","position","recruitingGrade",
+                            "yearRanked", "originalPositionRank", "totalPoints", 
+                            "yearsPlayed", "avgPointsPerYear")
+dfRecruitCareer$position <- factor(dfRecruitCareer$position)
+dfRecruitCareer$yearRostered <- factor(dfRecruitCareer$yearRostered)
+dfRecruitCareer$yearRanked <- factor(dfRecruitCareer$yearRanked)
 
 
 rm(dfRecruits, dfPoints, dfRecruitStats) #free memory
 
+#-Remove recruits that aren't offensive players
+dfRecruitCareer <- subset(dfRecruitCareer, position %in% c("RB","WR","QB","TE","ATH","FB"))
 
-dfClass07 <- subset(dfRecruitCareer, yearRanked == 2007)
-dfClass08 <- subset(dfRecruitCareer, yearRanked == 2008)
-dfClass09 <- subset(dfRecruitCareer, yearRanked == 2009)
-dfClass10 <- subset(dfRecruitCareer, yearRanked == 2010)
-dfClass11 <- subset(dfRecruitCareer, yearRanked == 2011)
-dfClass12 <- subset(dfRecruitCareer, yearRanked == 2012)
-dfClass13 <- subset(dfRecruitCareer, yearRanked == 2013)
+#-New column for overall ranking (for year)
+dfRecruitCareer <- dfRecruitCareer %>% arrange(yearRanked, -avgPointsPerYear) %>% 
+  group_by(yearRanked) %>% mutate(newOverallRank = row_number())
+
+#-New column for position ranking (for year)
+dfRecruitCareer <- dfRecruitCareer %>% arrange(yearRanked, -avgPointsPerYear) %>% 
+  group_by(yearRanked, position) %>% mutate(newPositionRank= row_number())
+
+#-New column for variance between new and original position ranking
+dfRecruitCareer$positionRankingVariance <- dfRecruitCareer$originalPositionRank -
+                                                    dfRecruitCareer$newPositionRank
+
+#-New column for difference between new and original position ranking
+dfRecruitCareer$positionRankingDifference<- abs(dfRecruitCareer$originalPositionRank -
+  dfRecruitCareer$newPositionRank)
 
 
 
