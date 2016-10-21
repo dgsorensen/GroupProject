@@ -60,22 +60,25 @@ getCombinedRecruits<- function(){
   filePath <- "./Data/PlayerRankings/"
   #-Fetch recruiting csv for each year and combine into df
   df <- foreach(i=2007:2013, .combine = 'rbind', .inorder = TRUE) %dopar% {
-    inFile <- paste(filePath, i, "CFBPlayerRankings.csv", sep = "")
+   inFile <- paste(filePath, i, "CFBPlayerRankings.csv", sep = "")
     dfHold<- read.csv(inFile, stringsAsFactors = FALSE)
     #add the year ranked as a new column
     dfHold$Year.Ranked <- i 
     #-If a recruit isn't graded, we should assign them the ranking of the last graded player
     #-This prevents drastic differences in original vs final rankings
- #   x <- match(c("NR","NA"), df$Grade) #Get the first instance of unranked
-  #  df$Rank[df$Grade >= x[1]] <- x[1] #Assign the rest the same ranking
+    x <- match(c("NR","NA"), dfHold$Grade) #Get the first instance of unranked
+    dfHold$Rank[dfHold$Rank >= x[1]] <- x[1] #Assign the rest the same ranking
     dfHold
   }
 
- 
-# df <- df %>% arrange(Year.Ranked, -Grade) %>% 
- #   group_by(Year.Ranked) %>% mutate(Rank = row_number())
+
+  
+
+  
   dfTemp <- df
-  dfTemp$Year <- factor(dfTemp$Year.Ranked)
+  dfTemp$Year <- factor(df$Year.Ranked)
+
+
   
   dfTemp <- group_by(dfTemp, Year)
   dfTemp <- summarize(dfTemp, numPlayers = n())
@@ -98,6 +101,7 @@ getCombinedRecruits<- function(){
     rm(dfTemp, p)
   }
   
+
   
   #-Grades go as low as 50, so unranked gets assigned 49
   df$Grade[df$Grade == "NA" | df$Grade == "NR"] <- 49
@@ -110,8 +114,11 @@ getCombinedRecruits<- function(){
   names(df) <- c("rank", "fullName", "lastName","firstName","position",
                  "recruitingGrade","hometown", "homeState", "yearRanked")
   
-  df <- df %>% arrange(yearRanked,rank) %>% 
-    group_by(yearRanked) %>% mutate(originalPositionRank = row_number())
+  df <- df %>% arrange(yearRanked,-as.integer(recruitingGrade)) %>% 
+    group_by(yearRanked) %>% mutate(origOverallRanking = row_number())
+  
+  df <- df %>% arrange(yearRanked, -as.integer(recruitingGrade)) %>% 
+    group_by(yearRanked, position) %>% mutate(origPosRanking = row_number())
   
   
   return(df)
@@ -170,36 +177,18 @@ getCombinedPlayers <- function() {
 }
 
 
-# analyzeRecruitingData <- function(df){
-# 
-#   df <- subset(df, position %in% c("QB", "WR", "RB", "TE", "FB", "ATH"))
-#   
-#   dfClass07 <- subset(df, yearRanked == 2007)
-#   dfClass08 <- subset(df, yearRanked == 2008)
-#   dfClass09 <- subset(df, yearRanked == 2009)
-#   dfClass10 <- subset(df, yearRanked == 2010)
-#   dfClass11 <- subset(df, yearRanked == 2011)
-#   dfClass12 <- subset(df, yearRanked == 2012)
-#   dfClass13 <- subset(df, yearRanked == 2013)
-#   
-#   class <- c(dfClass07, dfClass08, dfClass09, dfClass10, dfClass11, dfClass12, dfClass13)
-#  
-#   foreach(i=class) {
-#     qb  <- subset(class, position == "QB")
-#     wr  <- subset(class, position == "WR")
-#     rb  <- subset(class, position == "RB")
-#     te  <- subset(class, position == "TE")
-#     fb  <- subset(class, position == "FB")
-#     ath <- subset(class, position == "ATH")
-#     
-#     pos <- c(qb,wr,rb,te,fb,ath)
-#     foreach(j=pos){
-#       j <- j[order(-j$avgPointsPerYear), ]
-#     }
-#     
-#     }
-#   
-# }
+createPlots <- function( dfRecruitCareer, dfYearlyStats){
+  
+  for(i in 2007:2013){
+    for(j in  c("RB","WR","QB","TE","ATH","FB"))
+      df <- subset(dfYearlyStats, yearPlayed == i, position == j)
+   
+      
+  }
+  
+  
+  
+}
 
 
 

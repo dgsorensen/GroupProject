@@ -44,14 +44,24 @@ dfCombinedPlayers  <- getCombinedPlayers()
 dfRecruits <- merge(dfCombinedPlayers , dfCombinedRecruits, 
                     by=c("fullName", "hometown", "homeState")) 
 
-
+dfRecruitsTemp <- subset(dfRecruits[,c(1,4,9,12,13)])
 rm(dfCombinedPlayers,dfCombinedRecruits) 
 
 #-Get the points per year for each recruit by reading the game files
 dfRecruitStats <- getRecruitStats(dfRecruits)    
 #-Stop the cluster.  CSV reading is finished
 stopCluster(cl)
+
+#-Hold the yearly stats for later use
 dfYearlyStats <- dfRecruitStats
+dfYearlyStats <- merge(dfRecruitsTemp,dfYearlyStats, by = ("playerCode"))
+dfYearlyStats <- subset(dfYearlyStats,position %in% c("RB","WR","QB","TE","ATH","FB"))
+
+dfYearlyStats <- dfYearlyStats %>% arrange(yearPlayed, -pointsInYear) %>% 
+  group_by(yearPlayed) %>% mutate(yearlyOverallRank = row_number())
+dfYearlyStats <- dfYearlyStats %>% arrange(yearPlayed, -pointsInYear) %>% 
+  group_by(yearPlayed, position) %>% mutate(yearlyPositionRank = row_number())
+
 #-Format stats to merge: create total points and years played
 dfRecruitStats <- group_by(dfRecruitStats, playerCode)
 dfPoints <- summarize(dfRecruitStats, totalPoints = sum(pointsInYear),
@@ -66,13 +76,12 @@ dfRecruitCareer$pointsPerYear<-
 #Drop unnecessary columns and make other columns more readable
 dfRecruitCareer <- subset(dfRecruitCareer[,-c(3,7,8)])
 names(dfRecruitCareer) <- c("playerCode", "name","homeState", "yearRostered",
-                            "recruitingRank","position","recruitingGrade",
-                            "yearRanked", "originalPositionRank", "totalPoints", 
-                            "yearsPlayed", "avgPointsPerYear")
+                            "recruitingRank", "position","recruitingGrade",
+                            "yearRanked", "origOverallRanking","origPositionRank", 
+                            "totalPoints", "yearsPlayed", "avgPointsPerYear")
 dfRecruitCareer$position <- factor(dfRecruitCareer$position)
 dfRecruitCareer$yearRostered <- factor(dfRecruitCareer$yearRostered)
 dfRecruitCareer$yearRanked <- factor(dfRecruitCareer$yearRanked)
-
 
 rm(dfRecruits, dfPoints, dfRecruitStats) #free memory
 
@@ -88,14 +97,14 @@ dfRecruitCareer <- dfRecruitCareer %>% arrange(yearRanked, -avgPointsPerYear) %>
   group_by(yearRanked, position) %>% mutate(newPositionRank= row_number())
 
 #-New column for variance between new and original position ranking
-dfRecruitCareer$positionRankingVariance <- dfRecruitCareer$originalPositionRank -
+dfRecruitCareer$positionRankingVariance <- dfRecruitCareer$origPositionRank -
                                                     dfRecruitCareer$newPositionRank
 
 #-New column for difference between new and original position ranking
-dfRecruitCareer$positionRankingDifference<- abs(dfRecruitCareer$originalPositionRank -
-  dfRecruitCareer$newPositionRank)
+dfRecruitCareer$positionRankingDifference<- abs(dfRecruitCareer$origPositionRank -
+                                 dfRecruitCareer$newPositionRank)
 
-
+createPlots(dfRecruitCareer, dfYearlyStats)
 
 
 
