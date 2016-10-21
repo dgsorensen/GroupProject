@@ -182,7 +182,7 @@ createPlots <- function( dfRecruitCareer, dfYearlyStats){
   for(i in 2007:2013){
     for(j in  c("RB","WR","QB","TE","ATH","FB"))
       df <- subset(dfYearlyStats, yearPlayed == i, position == j)
-   
+   #- Sam changed this
       
   }
   
