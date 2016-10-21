@@ -17,6 +17,7 @@ library(scales)
 numCores <- detectCores()
 cl <- makeCluster(numCores - 1)
 registerDoParallel(cl)
+#-Sam Test
 
 
 #-Check for recruit ranking files.  Rescrape files if not found
