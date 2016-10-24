@@ -26,6 +26,7 @@ if(!(file.exists("./Data/PlayerRankings/2007CFBPlayerRankings.csv"))){
   #Commented to prevent scraping
   #source("./R/RecruitingScraper.R")
   # getRecruits()
+  #Testing for Will
   stop("Data Files not Found", call.=FALSE)
 }
 
