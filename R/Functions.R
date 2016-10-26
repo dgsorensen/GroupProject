@@ -186,16 +186,55 @@ createYearlyPlots <- function(){
     ggsave(filename = paste ("./Plots/", i, "Scatter.png", sep = " "), plot = p, 
            width = 6, height = 4, dpi = 600)
     
-    for(j in  c("RB","WR","QB","TE","ATH","FB"))
+    p2 <- qplot(positionRankingVariance, data = dfYear, geom = "histogram", binwidth = 20)
+    ggsave(filename = paste ("./Plots/", i, "PositionVarianceHistogram.png", sep = " "), plot = p2, 
+           width = 6, height = 4, dpi = 600)
+    
+    p3 <- qplot(positionRankingDifference, data = dfYear, geom = "histogram", binwidth = 20)
+    ggsave(filename = paste ("./Plots/", i, "PositionDifferenceHistogram.png", sep = " "), plot = p3, 
+           width = 6, height = 4, dpi = 600)
+    
+    for(j in  c("RB","WR","QB","TE","ATH","FB")){
       dfPos <- subset(dfYear, position == j)
-      p2 <- qplot(yearlyOrigPosRank, yearlyPositionRank, data = dfPos, geom = "point", log = "y")
-      ggsave(filename = paste ("./Plots/", i, j, "Scatter.png", sep = " "), plot = p2, 
+      p4 <- qplot(yearlyOrigPosRank, yearlyPositionRank, data = dfPos, geom = "point", log = "y")
+      ggsave(filename = paste ("./Plots/", i, j, "Scatter.png", sep = " "), plot = p4, 
              width = 6, height = 4, dpi = 600)
+      
+      p5 <- qplot(positionRankingVariance, data = dfPos, geom = "histogram", binwidth = 5)
+      ggsave(filename = paste ("./Plots/", i, j, "PositionVarianceHistogram.png", sep = " "), plot = p5, 
+             width = 6, height = 4, dpi = 600)
+      
+      p6 <- qplot(positionRankingDifference, data = dfPos, geom = "histogram", binwidth = 5)
+      ggsave(filename = paste ("./Plots/", i, j, "PositionDifferenceHistogram.png", sep = " "), plot = p6, 
+             width = 6, height = 4, dpi = 600)
+    }
       
   }
   
 }
 
+#Function to create plots based on the overall player pool
+createCareerPlots <- function(){
+  
+    p <- qplot(yearlyOrigOverallRank, yearlyOverallRank, data = dfRecruitCareer, geom = "point", log = "y")
+    ggsave(filename = paste ("./Plots/CareerScatter.png", sep = " "), plot = p, 
+           width = 6, height = 4, dpi = 600)
+    
+    p2 <- qplot(positionRankingVariance, data = dfRecruitCareer, geom = "histogram", binwidth = 25000)
+    ggsave(filename = paste ("./Plots/CareerVarianceHistogram.png", sep = " "), plot = p2, 
+           width = 6, height = 4, dpi = 600)
+    
+    p3 <- qplot(positionRankingDifference, data = dfRecruitCareer, geom = "histogram", binwidth = 25000)
+    ggsave(filename = paste ("./Plots/CareerDifferenceHistogram.png", sep = " "), plot = p3, 
+           width = 6, height = 4, dpi = 600)
+    
+    for(j in  c("RB","WR","QB","TE","ATH","FB")){
+      dfPos <- subset(dfRecruitCareer, position == j)
+    p4 <- qplot(yearlyOrigPosRank, yearlyPositionRank, data = dfPos, geom = "point", log = "y")
+    ggsave(filename = paste ("./Plots/", j, "CareerScatter.png", sep = " "), plot = p4, 
+           width = 6, height = 4, dpi = 600)
+    }
+}
 
 
 
