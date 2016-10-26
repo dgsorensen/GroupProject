@@ -176,17 +176,23 @@ getCombinedPlayers <- function() {
   
 }
 
-
-createPlots <- function( dfRecruitCareer, dfYearlyStats){
+#Function to create plots based on yearly and positional statistics
+createYearlyPlots <- function(){
   
   for(i in 2007:2013){
+    
+    dfYear <- subset(dfYearlyStats, yearPlayed == i)
+    p <- qplot(yearlyOrigOverallRank, yearlyOverallRank, data = dfYear, geom = "point", log = "y")
+    ggsave(filename = paste ("./Plots/", i, "Scatter.png", sep = " "), plot = p, 
+           width = 6, height = 4, dpi = 600)
+    
     for(j in  c("RB","WR","QB","TE","ATH","FB"))
-      df <- subset(dfYearlyStats, yearPlayed == i, position == j)
-   #- Sam changed this
+      dfPos <- subset(dfYear, position == j)
+      p2 <- qplot(yearlyOrigPosRank, yearlyPositionRank, data = dfPos, geom = "point", log = "y")
+      ggsave(filename = paste ("./Plots/", i, j, "Scatter.png", sep = " "), plot = p2, 
+             width = 6, height = 4, dpi = 600)
       
   }
-  
-  
   
 }
 

@@ -26,7 +26,6 @@ if(!(file.exists("./Data/PlayerRankings/2007CFBPlayerRankings.csv"))){
   #Commented to prevent scraping
   #source("./R/RecruitingScraper.R")
   # getRecruits()
-  #Testing for Will
   stop("Data Files not Found", call.=FALSE)
 }
 
@@ -58,6 +57,16 @@ stopCluster(cl)
 dfYearlyStats <- dfRecruitStats
 dfYearlyStats <- merge(dfRecruitsTemp,dfYearlyStats, by = ("playerCode"))
 dfYearlyStats <- subset(dfYearlyStats,position %in% c("RB","WR","QB","TE","ATH","FB"))
+
+dfYearlyStats <- dfYearlyStats %>% arrange(yearPlayed, origOverallRanking) %>% 
+  group_by(yearPlayed) %>% mutate(yearlyOrigOverallRank = row_number())
+
+dfYearlyStats <- dfYearlyStats %>% arrange(yearPlayed, origPosRanking) %>% 
+  group_by(yearPlayed, position) %>% mutate(yearlyOrigPosRank = row_number())
+
+dfYearlyStats <- dfYearlyStats[order(-origPosRanking),]
+group_by(dfYearlyStats$position)
+dfYearlyStats$adjPositionRank <- row_number()
 
 dfYearlyStats <- dfYearlyStats %>% arrange(yearPlayed, -pointsInYear) %>% 
   group_by(yearPlayed) %>% mutate(yearlyOverallRank = row_number())
@@ -106,7 +115,8 @@ dfRecruitCareer$positionRankingVariance <- dfRecruitCareer$origPositionRank -
 dfRecruitCareer$positionRankingDifference<- abs(dfRecruitCareer$origPositionRank -
                                  dfRecruitCareer$newPositionRank)
 
-createPlots(dfRecruitCareer, dfYearlyStats)
+#create Scatter plots by position and year
+createYearlyPlots()
 
 
 
