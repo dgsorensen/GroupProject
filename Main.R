@@ -17,7 +17,6 @@ library(scales)
 numCores <- detectCores()
 cl <- makeCluster(numCores - 1)
 registerDoParallel(cl)
-#-Sam Test
 
 
 #-Check for recruit ranking files.  Rescrape files if not found
@@ -69,6 +68,11 @@ dfYearlyStats <- dfYearlyStats %>% arrange(yearPlayed, -pointsInYear) %>%
 dfYearlyStats <- dfYearlyStats %>% arrange(yearPlayed, -pointsInYear) %>% 
   group_by(yearPlayed, position) %>% mutate(yearlyPositionRank = row_number())
 
+dfYearlyStats$positionRankingVariance <- dfYearlyStats$yearlyOrigPosRank -
+  dfYearlyStats$yearlyPositionRank
+
+dfYearlyStats$positionRankingDifference<- abs(dfYearlyStats$positionRankingVariance)
+
 #-Format stats to merge: create total points and years played
 dfRecruitStats <- group_by(dfRecruitStats, playerCode)
 dfPoints <- summarize(dfRecruitStats, totalPoints = sum(pointsInYear),
@@ -108,12 +112,13 @@ dfRecruitCareer$positionRankingVariance <- dfRecruitCareer$origPositionRank -
                                                     dfRecruitCareer$newPositionRank
 
 #-New column for difference between new and original position ranking
-dfRecruitCareer$positionRankingDifference<- abs(dfRecruitCareer$origPositionRank -
-                                 dfRecruitCareer$newPositionRank)
+dfRecruitCareer$positionRankingDifference<- abs(dfRecruitCareer$positionRankingVariance)
 
-#create Scatter plots by position and year
+#create scatter and histogram plots by position and year based on rankings and variance
 createYearlyPlots()
 
+#Create scatter and histogram plots for the overall data set (i.e career)
+createYCareerPlots()
 
 
 
