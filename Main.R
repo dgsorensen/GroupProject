@@ -64,10 +64,6 @@ dfYearlyStats <- dfYearlyStats %>% arrange(yearPlayed, origOverallRanking) %>%
 dfYearlyStats <- dfYearlyStats %>% arrange(yearPlayed, origPosRanking) %>% 
   group_by(yearPlayed, position) %>% mutate(yearlyOrigPosRank = row_number())
 
-dfYearlyStats <- dfYearlyStats[order(-origPosRanking),]
-group_by(dfYearlyStats$position)
-dfYearlyStats$adjPositionRank <- row_number()
-
 dfYearlyStats <- dfYearlyStats %>% arrange(yearPlayed, -pointsInYear) %>% 
   group_by(yearPlayed) %>% mutate(yearlyOverallRank = row_number())
 dfYearlyStats <- dfYearlyStats %>% arrange(yearPlayed, -pointsInYear) %>% 
