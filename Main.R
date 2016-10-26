@@ -118,7 +118,7 @@ dfRecruitCareer$positionRankingDifference<- abs(dfRecruitCareer$positionRankingV
 createYearlyPlots()
 
 #Create scatter and histogram plots for the overall data set (i.e career)
-createYCareerPlots()
+createCareerPlots()
 
 
 
