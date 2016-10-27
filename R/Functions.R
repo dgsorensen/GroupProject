@@ -216,22 +216,30 @@ createYearlyPlots <- function(){
 #Function to create plots based on the overall player pool
 createCareerPlots <- function(){
   
-    p <- qplot(yearlyOrigOverallRank, yearlyOverallRank, data = dfRecruitCareer, geom = "point", log = "y")
+    p <- qplot(adjOverallRank, newOverallRank, data = dfRecruitCareer, geom = "point", log = "y")
     ggsave(filename = paste ("./Plots/CareerScatter.png", sep = " "), plot = p, 
            width = 6, height = 4, dpi = 600)
     
-    p2 <- qplot(positionRankingVariance, data = dfRecruitCareer, geom = "histogram", binwidth = 25000)
+    p2 <- qplot(positionRankingVariance, data = dfRecruitCareer, geom = "histogram", binwidth = 20)
     ggsave(filename = paste ("./Plots/CareerVarianceHistogram.png", sep = " "), plot = p2, 
            width = 6, height = 4, dpi = 600)
     
-    p3 <- qplot(positionRankingDifference, data = dfRecruitCareer, geom = "histogram", binwidth = 25000)
+    p3 <- qplot(positionRankingDifference, data = dfRecruitCareer, geom = "histogram", binwidth = 20)
     ggsave(filename = paste ("./Plots/CareerDifferenceHistogram.png", sep = " "), plot = p3, 
            width = 6, height = 4, dpi = 600)
     
     for(j in  c("RB","WR","QB","TE","ATH","FB")){
       dfPos <- subset(dfRecruitCareer, position == j)
-    p4 <- qplot(yearlyOrigPosRank, yearlyPositionRank, data = dfPos, geom = "point", log = "y")
+    p4 <- qplot(origPositionRank, newPositionRank, data = dfPos, geom = "point", log = "y")
     ggsave(filename = paste ("./Plots/", j, "CareerScatter.png", sep = " "), plot = p4, 
+           width = 6, height = 4, dpi = 600)
+    
+    p5 <- qplot(positionRankingVariance, data = dfPos, geom = "histogram", binwidth = 5)
+    ggsave(filename = paste ("./Plots/", j, "CareerPositionVarianceHistogram.png", sep = " "), plot = p5, 
+           width = 6, height = 4, dpi = 600)
+    
+    p6 <- qplot(positionRankingDifference, data = dfPos, geom = "histogram", binwidth = 5)
+    ggsave(filename = paste ("./Plots/",j, "CareerPositionDifferenceHistogram.png", sep = " "), plot = p6, 
            width = 6, height = 4, dpi = 600)
     }
 }

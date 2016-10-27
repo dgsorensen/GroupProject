@@ -99,6 +99,14 @@ rm(dfRecruits, dfPoints, dfRecruitStats) #free memory
 #-Remove recruits that aren't offensive players
 dfRecruitCareer <- subset(dfRecruitCareer, position %in% c("RB","WR","QB","TE","ATH","FB"))
 
+#-New column for adjusted overall ranking by year (just offensive skill positions)
+dfRecruitCareer <- dfRecruitCareer %>% arrange(yearRanked, origOverallRanking) %>% 
+  group_by(yearRanked) %>% mutate(adjOverallRank= row_number())
+
+#-New column for adjusted position ranking by year (just offensive skill positions)
+dfRecruitCareer <- dfRecruitCareer %>% arrange(yearRanked, origOverallRanking) %>% 
+  group_by(yearRanked, position) %>% mutate(adjPositionRank = row_number())
+
 #-New column for overall ranking (for year)
 dfRecruitCareer <- dfRecruitCareer %>% arrange(yearRanked, -avgPointsPerYear) %>% 
   group_by(yearRanked) %>% mutate(newOverallRank = row_number())
@@ -108,7 +116,7 @@ dfRecruitCareer <- dfRecruitCareer %>% arrange(yearRanked, -avgPointsPerYear) %>
   group_by(yearRanked, position) %>% mutate(newPositionRank= row_number())
 
 #-New column for variance between new and original position ranking
-dfRecruitCareer$positionRankingVariance <- dfRecruitCareer$origPositionRank -
+dfRecruitCareer$positionRankingVariance <- dfRecruitCareer$adjPositionRank -
                                                     dfRecruitCareer$newPositionRank
 
 #-New column for difference between new and original position ranking
