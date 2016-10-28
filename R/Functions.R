@@ -244,5 +244,19 @@ createCareerPlots <- function(){
     }
 }
 
+plotMeanDifference <- function(){
+  
+  df <- group_by(dfYearlyStats, yearPlayed)
+  summ <- summarize(df, avgRankingDifference = mean(positionRankingDifference))
 
-
+  summ$yearPlayed <- factor(summ$yearPlayed)
+  
+  p <- ggplot(summ, aes(x=yearPlayed, y=avgRankingDifference,fill = yearPlayed), stat = "identity")+
+    geom_bar(stat = "identity")+
+    scale_x_discrete(name = "Year",
+                       breaks = c(2007:2013))
+  
+  
+  ggsave(filename = "./Plots/MeanYearlyDifferenceBar.png", plot = p, 
+         width = 6, height = 4, dpi = 600)
+}

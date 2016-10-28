@@ -13,6 +13,7 @@ suppressPackageStartupMessages(library(doParallel))
 library(ggplot2)
 library(scales)
 
+
 #-Register Parallel for faster looping
 numCores <- detectCores()
 cl <- makeCluster(numCores - 1)
@@ -123,10 +124,12 @@ dfRecruitCareer$positionRankingVariance <- dfRecruitCareer$adjPositionRank -
 dfRecruitCareer$positionRankingDifference<- abs(dfRecruitCareer$positionRankingVariance)
 
 #create scatter and histogram plots by position and year based on rankings and variance
-createYearlyPlots()
+#createYearlyPlots()
 
 #Create scatter and histogram plots for the overall data set (i.e career)
-createCareerPlots()
+#createCareerPlots()
+
+plotMeanDifference()
 
 
 
