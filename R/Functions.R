@@ -246,6 +246,9 @@ createCareerPlots <- function(){
 
 plotMeanDifference <- function(){
   
+  
+  #Summarize and plot the mean difference by year
+  
   df <- group_by(dfYearlyStats, yearPlayed)
   summ <- summarize(df, avgRankingDifference = mean(positionRankingDifference))
 
@@ -256,7 +259,21 @@ plotMeanDifference <- function(){
     scale_x_discrete(name = "Year",
                        breaks = c(2007:2013))
   
-  
   ggsave(filename = "./Plots/MeanYearlyDifferenceBar.png", plot = p, 
+         width = 6, height = 4, dpi = 600)
+  
+  #Summarize and plot the mean difference by position
+  
+  df <- group_by(dfYearlyStats, position)
+  summ <- summarize(df, avgRankingDifference = mean(positionRankingDifference))
+  
+  #summ$yearPlayed <- factor(summ$yearPlayed)
+  
+  p <- ggplot(summ, aes(x=position, y=avgRankingDifference,fill = position), stat = "identity")+
+    geom_bar(stat = "identity")+
+    scale_x_discrete(name = "Position",
+                     breaks = c("RB","WR","QB","TE","ATH","FB"))
+  
+  ggsave(filename = "./Plots/MeanPositionDifferenceBar.png", plot = p, 
          width = 6, height = 4, dpi = 600)
 }

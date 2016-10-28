@@ -124,11 +124,12 @@ dfRecruitCareer$positionRankingVariance <- dfRecruitCareer$adjPositionRank -
 dfRecruitCareer$positionRankingDifference<- abs(dfRecruitCareer$positionRankingVariance)
 
 #create scatter and histogram plots by position and year based on rankings and variance
-#createYearlyPlots()
+createYearlyPlots()
 
 #Create scatter and histogram plots for the overall data set (i.e career)
-#createCareerPlots()
+createCareerPlots()
 
+#Create bar charts for mean difference 
 plotMeanDifference()
 
 
