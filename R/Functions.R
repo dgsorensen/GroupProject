@@ -182,7 +182,7 @@ createYearlyPlots <- function(){
   for(i in 2007:2013){
     
     dfYear <- subset(dfYearlyStats, yearPlayed == i)
-    p <- qplot(yearlyOrigOverallRank, yearlyOverallRank, data = dfYear, geom = "point", log = "y")
+    p <- qplot(yearlyOrigOverallRank, yearlyOverallRank, data = dfYear, geom = "point")
     ggsave(filename = paste ("./Plots/", i, "Scatter.png", sep = " "), plot = p, 
            width = 6, height = 4, dpi = 600)
     
@@ -196,7 +196,7 @@ createYearlyPlots <- function(){
     
     for(j in  c("RB","WR","QB","TE","ATH","FB")){
       dfPos <- subset(dfYear, position == j)
-      p4 <- qplot(yearlyOrigPosRank, yearlyPositionRank, data = dfPos, geom = "point", log = "y")
+      p4 <- qplot(yearlyOrigPosRank, yearlyPositionRank, data = dfPos, geom = "point")
       ggsave(filename = paste ("./Plots/", i, j, "Scatter.png", sep = " "), plot = p4, 
              width = 6, height = 4, dpi = 600)
       
@@ -216,7 +216,7 @@ createYearlyPlots <- function(){
 #Function to create plots based on the overall player pool
 createCareerPlots <- function(){
   
-    p <- qplot(adjOverallRank, newOverallRank, data = dfRecruitCareer, geom = "point", log = "y")
+    p <- qplot(adjOverallRank, newOverallRank, data = dfRecruitCareer, geom = "point")
     ggsave(filename = paste ("./Plots/CareerScatter.png", sep = " "), plot = p, 
            width = 6, height = 4, dpi = 600)
     
@@ -230,7 +230,7 @@ createCareerPlots <- function(){
     
     for(j in  c("RB","WR","QB","TE","ATH","FB")){
       dfPos <- subset(dfRecruitCareer, position == j)
-    p4 <- qplot(origPositionRank, newPositionRank, data = dfPos, geom = "point", log = "y")
+    p4 <- qplot(origPositionRank, newPositionRank, data = dfPos, geom = "point")
     ggsave(filename = paste ("./Plots/", j, "CareerScatter.png", sep = " "), plot = p4, 
            width = 6, height = 4, dpi = 600)
     
@@ -264,10 +264,8 @@ plotMeanDifference <- function(){
   
   #Summarize and plot the mean difference by position
   
-  df <- group_by(dfYearlyStats, position)
+  df <- group_by(dfRecruitCareer, position)
   summ <- summarize(df, avgRankingDifference = mean(positionRankingDifference))
-  
-  #summ$yearPlayed <- factor(summ$yearPlayed)
   
   p <- ggplot(summ, aes(x=position, y=avgRankingDifference,fill = position), stat = "identity")+
     geom_bar(stat = "identity")+
