@@ -23,7 +23,7 @@ registerDoParallel(cl)
 #-Check for recruit ranking files.  Rescrape files if not found
 source("./R/Functions.R")
 if(!(file.exists("./Data/PlayerRankings/2007CFBPlayerRankings.csv"))){
-  #Commented to prevent scraping
+  #Commented to prevent scraping, scraping takes over an hour
   #source("./R/RecruitingScraper.R")
   # getRecruits()
   stop("Data Files not Found", call.=FALSE)
