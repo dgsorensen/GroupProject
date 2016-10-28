@@ -182,15 +182,28 @@ createYearlyPlots <- function(){
   for(i in 2007:2013){
     
     dfYear <- subset(dfYearlyStats, yearPlayed == i)
-    p <- qplot(yearlyOrigOverallRank, yearlyOverallRank, data = dfYear, geom = "point")
+    title = paste("Original Ranking vs Ranking in", i, sep = "")
+    p <- qplot(yearlyOrigOverallRank, yearlyOverallRank, data = dfYear, geom = "point",
+               color = position, main = title)+
+      scale_x_continuous(name = "Original Ranking")+
+      scale_y_continuous(name = "Current Yearly Ranking")
     ggsave(filename = paste ("./Plots/", i, "Scatter.png", sep = " "), plot = p, 
            width = 6, height = 4, dpi = 600)
     
-    p2 <- qplot(positionRankingVariance, data = dfYear, geom = "histogram", binwidth = 20)
+    title = paste("Variance of original ranking and current ranking in", i, sep="")
+    p2 <- qplot(positionRankingVariance, data = dfYear, geom = "histogram", 
+                main = title, binwidth = 20)+
+          scale_x_continuous(name = "Variance between rankings")+
+          scale_y_continuous(name = "Density of Occurence")
     ggsave(filename = paste ("./Plots/", i, "PositionVarianceHistogram.png", sep = " "), plot = p2, 
            width = 6, height = 4, dpi = 600)
     
-    p3 <- qplot(positionRankingDifference, data = dfYear, geom = "histogram", binwidth = 20)
+    
+    title = paste("Difference of original ranking and current ranking in", i, sep="")
+    p3 <- qplot(positionRankingDifference, data = dfYear, geom = "histogram",
+                main = title,binwidth = 20)+
+                scale_x_continuous(name = "Difference between rankings")+
+                scale_y_continuous(name = "Density of Occurence")
     ggsave(filename = paste ("./Plots/", i, "PositionDifferenceHistogram.png", sep = " "), plot = p3, 
            width = 6, height = 4, dpi = 600)
     
@@ -230,7 +243,12 @@ createCareerPlots <- function(){
     
     for(j in  c("RB","WR","QB","TE","ATH","FB")){
       dfPos <- subset(dfRecruitCareer, position == j)
-    p4 <- qplot(origPositionRank, newPositionRank, data = dfPos, geom = "point")
+  title = paste("Position Differences for ",j,sep="")
+    p4 <- qplot(origPositionRank, newPositionRank, data = dfPos, 
+                main = title, geom = "point")+
+      scale_x_continuous(name = "Original Rank")+
+      scale_y_continuous(name = "Overall Rank")+
+      scale_color_brewer()
     ggsave(filename = paste ("./Plots/", j, "CareerScatter.png", sep = " "), plot = p4, 
            width = 6, height = 4, dpi = 600)
     
@@ -249,15 +267,16 @@ plotMeanDifference <- function(){
   
   #Summarize and plot the mean difference by year
   
-  df <- group_by(dfYearlyStats, yearPlayed)
+  df <- group_by(dfRecruitCareer, yearRanked)
   summ <- summarize(df, avgRankingDifference = mean(positionRankingDifference))
 
-  summ$yearPlayed <- factor(summ$yearPlayed)
+  summ$yearRanked <- factor(summ$yearRanked)
   
-  p <- ggplot(summ, aes(x=yearPlayed, y=avgRankingDifference,fill = yearPlayed), stat = "identity")+
+  p <- ggplot(summ, aes(x=yearRanked, y=avgRankingDifference,fill = yearRanked), stat = "identity")+
     geom_bar(stat = "identity")+
     scale_x_discrete(name = "Year",
                        breaks = c(2007:2013))
+  print(p)
   
   ggsave(filename = "./Plots/MeanYearlyDifferenceBar.png", plot = p, 
          width = 6, height = 4, dpi = 600)
@@ -271,7 +290,20 @@ plotMeanDifference <- function(){
     geom_bar(stat = "identity")+
     scale_x_discrete(name = "Position",
                      breaks = c("RB","WR","QB","TE","ATH","FB"))
+  print(p)
   
   ggsave(filename = "./Plots/MeanPositionDifferenceBar.png", plot = p, 
          width = 6, height = 4, dpi = 600)
+  
+  df <- group_by(dfRecruitCareer, yearRanked, position)
+  summ <- summarize(df, avgRankingDifference = mean(positionRankingDifference))
+  
+  summ$yearRanked <- factor(summ$yearRanked)
+  
+  p2 <- ggplot(summ, aes(x=yearRanked, y=avgRankingDifference, color = I("black"),fill = position))+
+    geom_bar(stat = "identity", position = "dodge")+
+    scale_fill_brewer(palette = "Set1")
+  print(p2)
+  
+  
 }

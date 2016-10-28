@@ -53,6 +53,7 @@ dfRecruitStats <- getRecruitStats(dfRecruits)
 #-Stop the cluster.  CSV reading is finished
 stopCluster(cl)
 
+dfRecruits <- subset(dfRecruits, recruitingGrade != 49)
 #-Hold the yearly stats for later use
 dfYearlyStats <- dfRecruitStats
 dfYearlyStats <- merge(dfRecruitsTemp,dfYearlyStats, by = ("playerCode"))
@@ -74,6 +75,7 @@ dfYearlyStats$positionRankingVariance <- dfYearlyStats$yearlyOrigPosRank -
 
 dfYearlyStats$positionRankingDifference<- abs(dfYearlyStats$positionRankingVariance)
 
+dfYearlyStats$yearPlayed <- factor(dfYearlyStats$yearPlayed)
 #-Format stats to merge: create total points and years played
 dfRecruitStats <- group_by(dfRecruitStats, playerCode)
 dfPoints <- summarize(dfRecruitStats, totalPoints = sum(pointsInYear),
@@ -94,6 +96,7 @@ names(dfRecruitCareer) <- c("playerCode", "name","homeState", "yearRostered",
 dfRecruitCareer$position <- factor(dfRecruitCareer$position)
 dfRecruitCareer$yearRostered <- factor(dfRecruitCareer$yearRostered)
 dfRecruitCareer$yearRanked <- factor(dfRecruitCareer$yearRanked)
+
 
 rm(dfRecruits, dfPoints, dfRecruitStats) #free memory
 
