@@ -43,7 +43,7 @@ getRecruitStats<- function(dfRecruits){
   df <- summarize(df,PointsInYear= sum(Rush.Yard, Rush.TD, Pass.Yard, Pass.TD,
                                        Pass.Int, Rec.Yards, Rec.TD,
                                        Kickoff.Ret.Yard,Kickoff.Ret.TD,
-                                       Punt.Ret.Yard,Misc.Ret.Yard, Misc.Ret.TD,
+                                       Punt.Ret.Yard, Punt.Ret.TD, Misc.Ret.Yard, Misc.Ret.TD,
                                        Off.2XP.Made))
   
   #-Set names and order df by yearPlayed descending

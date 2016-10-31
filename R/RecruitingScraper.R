@@ -52,8 +52,8 @@ getRecruits <- function () {
       
       #-All names come as First LastVideo | xxxx, and we only want First Last
       df$Name <- gsub("Video.*", "", df$Name) #Remove Video* from Name
-      df$First.Name <- gsub(" (.*?)", "", df$Name) #Grab data before Space
-      df$Last.Name <-  sub(".* ", "", df$Name) #Grab data after Space
+      df$First.Name <- gsub(" (.*?)", "", df$Name) #Grab data before Space (not greedy)
+      df$Last.Name <-  sub("(.*?) ", "", df$Name) #Grab data after Space (not greedy)
       
       #Formatting Positions (e.g. QB-DT, etc.  We just want the position)
       df$Position <- gsub("#.* ", "", df$Position) #fixes "#1 DT" issue
