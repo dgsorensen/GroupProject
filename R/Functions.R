@@ -251,12 +251,16 @@ createCareerPlots <- function(){
   ggsave(filename = paste ("./Plots/CareerScatter.png", sep = " "), plot = p, 
          width = 6, height = 4, dpi = 600)
   
-  p2 <- qplot(positionRankingVariance, data = dfRecruitCareer, geom = "histogram", binwidth = 20)
-  ggsave(filename = paste ("./Plots/CareerVarianceHistogram.png", sep = " "), plot = p2, 
+  p2 <- qplot(positionRankingVariance, data = dfRecruitCareer,geom = "density", fill = I("purple"), alpha = I(0.6))+
+    labs(x = "Variance in Position Ranking", y = "Density of Occurence", 
+         title = "Variance for Career")
+  ggsave(filename = "./Plots/CareerPositionVarianceDensity.png", plot = p2, 
          width = 6, height = 4, dpi = 600)
   
-  p3 <- qplot(positionRankingDifference, data = dfRecruitCareer, geom = "histogram", binwidth = 20)
-  ggsave(filename = paste ("./Plots/CareerDifferenceHistogram.png", sep = " "), plot = p3, 
+  p3 <- qplot(positionRankingDifference, data = dfRecruitCareer, geom = "density", fill = I("yellow"), alpha = I(0.6))+
+    labs(x = "Difference in Position Ranking", y = "Density of Occurence", 
+         title = "Difference for Career")
+  ggsave(filename = "./Plots/CareerPositionDifferenceDensity.png", plot = p3, 
          width = 6, height = 4, dpi = 600)
   
   for(j in  c("RB","WR","QB","TE","ATH","FB")){
