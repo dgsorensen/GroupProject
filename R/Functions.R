@@ -56,11 +56,11 @@ getRecruitStats<- function(dfRecruits){
 
 #-Combine the recruit CSVs into a single dataframe
 getCombinedRecruits<- function(){
-
+  
   filePath <- "./Data/PlayerRankings/"
   #-Fetch recruiting csv for each year and combine into df
   df <- foreach(i=2007:2013, .combine = 'rbind', .inorder = TRUE) %dopar% {
-   inFile <- paste(filePath, i, "CFBPlayerRankings.csv", sep = "")
+    inFile <- paste(filePath, i, "CFBPlayerRankings.csv", sep = "")
     dfHold<- read.csv(inFile, stringsAsFactors = FALSE)
     #add the year ranked as a new column
     dfHold$Year.Ranked <- i 
@@ -70,15 +70,15 @@ getCombinedRecruits<- function(){
     dfHold$Rank[dfHold$Rank >= x[1]] <- x[1] #Assign the rest the same ranking
     dfHold
   }
-
-
   
-
+  
+  
+  
   
   dfTemp <- df
   dfTemp$Year <- factor(df$Year.Ranked)
-
-
+  
+  
   
   dfTemp <- group_by(dfTemp, Year)
   dfTemp <- summarize(dfTemp, numPlayers = n())
@@ -101,11 +101,11 @@ getCombinedRecruits<- function(){
     rm(dfTemp, p)
   }
   
-
+  
   
   #-Grades go as low as 50, so unranked gets assigned 49
   df$Grade[df$Grade == "NA" | df$Grade == "NR"] <- 49
-
+  
   #-Remove duplicates and keep the newest(solves the JUCO problem)
   df <- df[order(-df$Year.Ranked), ]
   df <- df[!duplicated(c(df$Full.Name, df$Home.Town, df$HomeState),
@@ -128,7 +128,7 @@ getCombinedRecruits<- function(){
 #-Combine the player CSVs into a single dataframe
 #-Remove player entries that don't correspond to a recruit
 getCombinedPlayers <- function() {
-
+  
   #-Fetch recruiting csv for each year and combine into df
   df <- foreach(i=2007:2013, .combine = 'rbind', .inorder = TRUE) %dopar% {
     inFile <- paste("./Data/PlayerInfo/", i, "player.csv", sep = "")
@@ -190,38 +190,52 @@ createYearlyPlots <- function(){
     ggsave(filename = paste ("./Plots/", i, "Scatter.png", sep = " "), plot = p, 
            width = 6, height = 4, dpi = 600)
     
-    title = paste("Variance of original ranking and current ranking in", i, sep="")
-    p2 <- qplot(positionRankingVariance, data = dfYear, geom = "histogram", 
-                main = title, binwidth = 20)+
-          scale_x_continuous(name = "Variance between rankings")+
-          scale_y_continuous(name = "Density of Occurence")
-    ggsave(filename = paste ("./Plots/", i, "PositionVarianceHistogram.png", sep = " "), plot = p2, 
+    title = paste("Variance of original ranking and current ranking in ", i, sep="")
+    p2 <- qplot(positionRankingVariance, data = dfYear, geom = "density", 
+                main = title, fill = I("blue"), alpha = I(0.6))+
+      theme(panel.grid = element_blank(), panel.background = element_blank())+
+      scale_x_continuous(name = "Variance between rankings")+
+      scale_y_continuous(name = "Density of Occurence")
+    print(p2)
+    ggsave(filename = paste ("./Plots/", i, "PositionVarianceDensity.png", sep = " "), plot = p2, 
            width = 6, height = 4, dpi = 600)
     
     
-    title = paste("Difference of original ranking and current ranking in", i, sep="")
-    p3 <- qplot(positionRankingDifference, data = dfYear, geom = "histogram",
-                main = title,binwidth = 20)+
-                scale_x_continuous(name = "Difference between rankings")+
-                scale_y_continuous(name = "Density of Occurence")
-    ggsave(filename = paste ("./Plots/", i, "PositionDifferenceHistogram.png", sep = " "), plot = p3, 
+    title = paste("Difference of original ranking and current ranking in ", i, sep="")
+    p3 <- qplot(positionRankingDifference, data = dfYear, geom = "density",
+                main = title,fill = I("green"), alpha = I(0.6))+
+      scale_x_continuous(name = "Difference between rankings")+
+      scale_y_continuous(name = "Density of Occurence")+
+      theme(panel.grid = element_blank(), panel.background = element_blank())
+    print(p3)
+    ggsave(filename = paste ("./Plots/", i, "PositionDifferenceDensity.png", sep = " "), plot = p3, 
            width = 6, height = 4, dpi = 600)
+    
     
     for(j in  c("RB","WR","QB","TE","ATH","FB")){
       dfPos <- subset(dfYear, position == j)
-      p4 <- qplot(yearlyOrigPosRank, yearlyPositionRank, data = dfPos, geom = "point")
+      p4 <- qplot(yearlyOrigPosRank, yearlyPositionRank, data = dfPos, geom = "point")+
+        labs(x="Original Position Rank", y = paste("Position Rank in ",i,sep=""),
+             title = paste("Original Rank vs Rank in ",i,sep=""))+
+        theme(panel.grid = element_blank(), panel.background = element_blank())
       ggsave(filename = paste ("./Plots/", i, j, "Scatter.png", sep = " "), plot = p4, 
              width = 6, height = 4, dpi = 600)
       
-      p5 <- qplot(positionRankingVariance, data = dfPos, geom = "histogram", binwidth = 5)
-      ggsave(filename = paste ("./Plots/", i, j, "PositionVarianceHistogram.png", sep = " "), plot = p5, 
+      p5 <- qplot(positionRankingVariance, data = dfPos, geom = "density", main = 
+                    paste(i," Variance for position: ",j, sep=""), fill = I("red"), alpha = I(0.6))+
+        labs(x = "Variance in Position", y = "Density of Occurence")+
+        theme(panel.grid = element_blank(), panel.background = element_blank())
+      ggsave(filename = paste ("./Plots/", i, j, "PositionVarianceDensity.png", sep = " "), plot = p5, 
              width = 6, height = 4, dpi = 600)
       
-      p6 <- qplot(positionRankingDifference, data = dfPos, geom = "histogram", binwidth = 5)
-      ggsave(filename = paste ("./Plots/", i, j, "PositionDifferenceHistogram.png", sep = " "), plot = p6, 
+      p6 <- qplot(positionRankingDifference, data = dfPos, geom = "density",main = 
+                    paste(i," Difference for position: ",j, sep=""), fill = I("orange"), alpha = I(0.6))+
+        theme(panel.grid = element_blank(), panel.background = element_blank())+
+        labs(x = "Difference in Position", y = "Density of Occurence") 
+      ggsave(filename = paste ("./Plots/", i, j, "PositionDifferenceDensity.png", sep = " "), plot = p6, 
              width = 6, height = 4, dpi = 600)
     }
-      
+    
   }
   
 }
@@ -229,21 +243,25 @@ createYearlyPlots <- function(){
 #Function to create plots based on the overall player pool
 createCareerPlots <- function(){
   
-    p <- qplot(adjOverallRank, newOverallRank, data = dfRecruitCareer, geom = "point")
-    ggsave(filename = paste ("./Plots/CareerScatter.png", sep = " "), plot = p, 
-           width = 6, height = 4, dpi = 600)
-    
-    p2 <- qplot(positionRankingVariance, data = dfRecruitCareer, geom = "histogram", binwidth = 20)
-    ggsave(filename = paste ("./Plots/CareerVarianceHistogram.png", sep = " "), plot = p2, 
-           width = 6, height = 4, dpi = 600)
-    
-    p3 <- qplot(positionRankingDifference, data = dfRecruitCareer, geom = "histogram", binwidth = 20)
-    ggsave(filename = paste ("./Plots/CareerDifferenceHistogram.png", sep = " "), plot = p3, 
-           width = 6, height = 4, dpi = 600)
-    
-    for(j in  c("RB","WR","QB","TE","ATH","FB")){
-      dfPos <- subset(dfRecruitCareer, position == j)
-  title = paste("Position Differences for ",j,sep="")
+  p <- qplot(adjOverallRank, newOverallRank, data = dfRecruitCareer, geom = "point", main = 
+               "Original Rank vs New Rank")+
+    labs(x = "Original Rank(lower is better)", y = "New Rank (lower is better")+
+    theme(panel.grid = element_blank(), panel.background = element_blank())+
+    scale_color_hue()
+  ggsave(filename = paste ("./Plots/CareerScatter.png", sep = " "), plot = p, 
+         width = 6, height = 4, dpi = 600)
+  
+  p2 <- qplot(positionRankingVariance, data = dfRecruitCareer, geom = "histogram", binwidth = 20)
+  ggsave(filename = paste ("./Plots/CareerVarianceHistogram.png", sep = " "), plot = p2, 
+         width = 6, height = 4, dpi = 600)
+  
+  p3 <- qplot(positionRankingDifference, data = dfRecruitCareer, geom = "histogram", binwidth = 20)
+  ggsave(filename = paste ("./Plots/CareerDifferenceHistogram.png", sep = " "), plot = p3, 
+         width = 6, height = 4, dpi = 600)
+  
+  for(j in  c("RB","WR","QB","TE","ATH","FB")){
+    dfPos <- subset(dfRecruitCareer, position == j)
+    title = paste("Position Differences for ",j,sep="")
     p4 <- qplot(origPositionRank, newPositionRank, data = dfPos, 
                 main = title, geom = "point")+
       scale_x_continuous(name = "Original Rank")+
@@ -252,14 +270,18 @@ createCareerPlots <- function(){
     ggsave(filename = paste ("./Plots/", j, "CareerScatter.png", sep = " "), plot = p4, 
            width = 6, height = 4, dpi = 600)
     
-    p5 <- qplot(positionRankingVariance, data = dfPos, geom = "histogram", binwidth = 5)
-    ggsave(filename = paste ("./Plots/", j, "CareerPositionVarianceHistogram.png", sep = " "), plot = p5, 
+    p5 <- qplot(positionRankingVariance, data = dfPos,geom = "density", fill = I("purple"), alpha = I(0.6))+
+      labs(x = "Variance in Position Ranking", y = "Density of Occurence", 
+           title = paste("Variance for ", j,  sep = ""))
+    ggsave(filename = paste ("./Plots/", j, "CareerPositionVarianceDensity.png", sep = " "), plot = p5, 
            width = 6, height = 4, dpi = 600)
     
-    p6 <- qplot(positionRankingDifference, data = dfPos, geom = "histogram", binwidth = 5)
-    ggsave(filename = paste ("./Plots/",j, "CareerPositionDifferenceHistogram.png", sep = " "), plot = p6, 
+    p6 <- qplot(positionRankingDifference, data = dfPos, geom = "density", fill = I("yellow"), alpha = I(0.6))+
+      labs(x = "Difference in Position Ranking", y = "Density of Occurence", 
+           title = paste("Difference for ", j, sep = ""))
+    ggsave(filename = paste ("./Plots/",j, "CareerPositionDifferenceDensity.png", sep = " "), plot = p6, 
            width = 6, height = 4, dpi = 600)
-    }
+  }
 }
 
 plotMeanDifference <- function(){
@@ -269,13 +291,13 @@ plotMeanDifference <- function(){
   
   df <- group_by(dfRecruitCareer, yearRanked)
   summ <- summarize(df, avgRankingDifference = mean(positionRankingDifference))
-
+  
   summ$yearRanked <- factor(summ$yearRanked)
   
   p <- ggplot(summ, aes(x=yearRanked, y=avgRankingDifference,fill = yearRanked), stat = "identity")+
     geom_bar(stat = "identity")+
     scale_x_discrete(name = "Year",
-                       breaks = c(2007:2013))
+                     breaks = c(2007:2013))
   print(p)
   
   ggsave(filename = "./Plots/MeanYearlyDifferenceBar.png", plot = p, 
@@ -290,8 +312,6 @@ plotMeanDifference <- function(){
     geom_bar(stat = "identity")+
     scale_x_discrete(name = "Position",
                      breaks = c("RB","WR","QB","TE","ATH","FB"))
-  print(p)
-  
   ggsave(filename = "./Plots/MeanPositionDifferenceBar.png", plot = p, 
          width = 6, height = 4, dpi = 600)
   
@@ -302,8 +322,10 @@ plotMeanDifference <- function(){
   
   p2 <- ggplot(summ, aes(x=yearRanked, y=avgRankingDifference, color = I("black"),fill = position))+
     geom_bar(stat = "identity", position = "dodge")+
-    scale_fill_brewer(palette = "Set1")
-  print(p2)
+    scale_fill_brewer(palette = "Set1")+
+    labs(x = "Year Ranked", y = "Difference in Ranking", title = "Summary of Position Differences")
   
+  ggsave(filename = "./Plots/OverallSummary.png", plot = p2, 
+         width = 6, height = 4, dpi = 600)
   
 }
