@@ -196,18 +196,17 @@ createYearlyPlots <- function(){
       theme(panel.grid = element_blank(), panel.background = element_blank())+
       scale_x_continuous(name = "Variance between rankings")+
       scale_y_continuous(name = "Density of Occurence")
-    print(p2)
+    
     ggsave(filename = paste ("./Plots/", i, "PositionVarianceDensity.png", sep = " "), plot = p2, 
            width = 6, height = 4, dpi = 600)
     
     
-    title = paste("Difference of original ranking and current ranking in ", i, sep="")
     p3 <- qplot(positionRankingDifference, data = dfYear, geom = "density",
                 main = title,fill = I("green"), alpha = I(0.6))+
       scale_x_continuous(name = "Difference between rankings")+
       scale_y_continuous(name = "Density of Occurence")+
       theme(panel.grid = element_blank(), panel.background = element_blank())
-    print(p3)
+    
     ggsave(filename = paste ("./Plots/", i, "PositionDifferenceDensity.png", sep = " "), plot = p3, 
            width = 6, height = 4, dpi = 600)
     
@@ -254,13 +253,13 @@ createCareerPlots <- function(){
   p2 <- qplot(positionRankingVariance, data = dfRecruitCareer,geom = "density", fill = I("purple"), alpha = I(0.6))+
     labs(x = "Variance in Position Ranking", y = "Density of Occurence", 
          title = "Variance for Career")
-  ggsave(filename = "./Plots/CareerPositionVarianceDensity.png", plot = p2, 
+  ggsave(filename = "./Plots/CareerVarianceDensity.png", plot = p2, 
          width = 6, height = 4, dpi = 600)
   
   p3 <- qplot(positionRankingDifference, data = dfRecruitCareer, geom = "density", fill = I("yellow"), alpha = I(0.6))+
     labs(x = "Difference in Position Ranking", y = "Density of Occurence", 
          title = "Difference for Career")
-  ggsave(filename = "./Plots/CareerPositionDifferenceDensity.png", plot = p3, 
+  ggsave(filename = "./Plots/CareerDifferenceDensity.png", plot = p3, 
          width = 6, height = 4, dpi = 600)
   
   for(j in  c("RB","WR","QB","TE","ATH","FB")){
