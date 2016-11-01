@@ -297,8 +297,9 @@ plotMeanDifference <- function(){
   p <- ggplot(summ, aes(x=yearRanked, y=avgRankingDifference,fill = yearRanked), stat = "identity")+
     geom_bar(stat = "identity")+
     scale_x_discrete(name = "Year",
-                     breaks = c(2007:2013))
-  print(p)
+                     breaks = c(2007:2013))+
+    labs(x = "Year Ranked", y = "Difference in Ranking", title = "Summary of Yearly Differences")+
+    guides(fill=FALSE)
   
   ggsave(filename = "./Plots/MeanYearlyDifferenceBar.png", plot = p, 
          width = 6, height = 4, dpi = 600)
@@ -311,9 +312,14 @@ plotMeanDifference <- function(){
   p <- ggplot(summ, aes(x=position, y=avgRankingDifference,fill = position), stat = "identity")+
     geom_bar(stat = "identity")+
     scale_x_discrete(name = "Position",
-                     breaks = c("RB","WR","QB","TE","ATH","FB"))
+                     breaks = c("RB","WR","QB","TE","ATH","FB"))+
+    labs(x = "Position", y = "Difference in Ranking", title = "Summary of Position Differences")+
+    guides(fill=FALSE)
+  
   ggsave(filename = "./Plots/MeanPositionDifferenceBar.png", plot = p, 
          width = 6, height = 4, dpi = 600)
+  
+  #Summarize and plot the overall difference with bars by year
   
   df <- group_by(dfRecruitCareer, yearRanked, position)
   summ <- summarize(df, avgRankingDifference = mean(positionRankingDifference))
@@ -326,6 +332,21 @@ plotMeanDifference <- function(){
     labs(x = "Year Ranked", y = "Difference in Ranking", title = "Summary of Position Differences")
   
   ggsave(filename = "./Plots/OverallSummary.png", plot = p2, 
+         width = 6, height = 4, dpi = 600)
+  
+  #Summarize and plot the overall difference with stacked bars
+  
+  df <- group_by(dfRecruitCareer, yearRanked, position)
+  summ <- summarize(df, avgRankingDifference = mean(positionRankingDifference))
+  
+  summ$yearRanked <- factor(summ$yearRanked)
+  
+  p2 <- ggplot(summ, aes(x=yearRanked, y=avgRankingDifference, color = I("black"),fill = position))+
+    geom_bar(stat = "identity")+
+    scale_fill_brewer(palette = "Set1")+
+    labs(x = "Year Ranked", y = "Difference in Ranking", title = "Summary of Position Differences")
+  
+  ggsave(filename = "./Plots/OverallSummaryStacked.png", plot = p2, 
          width = 6, height = 4, dpi = 600)
   
 }
