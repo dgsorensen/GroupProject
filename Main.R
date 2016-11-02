@@ -1,3 +1,7 @@
+#Main.R
+#Handle method calls and control the logic flow
+#Call functions located in ./R/Functions.R
+
 #-Clear work area
 rm(list = ls()) 
 
@@ -56,6 +60,11 @@ stopCluster(cl)
 dfRecruits <- subset(dfRecruits, recruitingGrade != 49)
 #-Hold the yearly stats for later use
 dfYearlyStats <- dfRecruitStats
+
+#---------------------------------------------------------------------
+#Create additional columns to use for comparison.  Since some recruits
+#never played, the original rankings we gave them are invalid
+#---------------------------------------------------------------------
 dfYearlyStats <- merge(dfRecruitsTemp,dfYearlyStats, by = ("playerCode"))
 dfYearlyStats <- subset(dfYearlyStats,position %in% c("RB","WR","QB","TE","ATH","FB"))
 
