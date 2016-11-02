@@ -352,4 +352,21 @@ plotMeanDifference <- function(){
   ggsave(filename = "./Plots/OverallSummaryStacked.png", plot = p2, 
          width = 6, height = 4, dpi = 600)
   
+  #Summarize the final number of recruits in our data set
+  
+  dfTemp <- dfRecruitCareer
+  dfTemp <- group_by(dfRecruitCareer, yearRanked)
+  dfTemp <- summarize(dfTemp, numPlayers = n())
+  
+  p <- ggplot(dfTemp, aes(x=yearRanked, y=numPlayers, fill=yearRanked))+
+    geom_bar(stat = "identity", color = "black")+
+    labs(x = "Year", y = "Number of Recruits", title = "Players per Year")+
+    theme(panel.grid = element_blank(), panel.background = element_blank())+
+    guides(fill=FALSE)
+  
+  
+  ggsave(filename = "./Plots/RecruitCensusFinal.png", plot = p, 
+         width = 6, height = 4, dpi = 600)
+  
+  
 }
